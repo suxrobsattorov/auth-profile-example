@@ -7,7 +7,7 @@ class AppConstants {
   /// Images
   static const String logoAsset = 'assets/images/logo.png';
   static const String googleAsset = 'assets/images/google.png';
-  static const String appleAsset = 'assets/images/apple-logo.png';
+  static const String appleAsset = 'assets/images/apple.png';
 
   /// Icons
   static const String homeIconAsset = 'assets/icons/home.png';

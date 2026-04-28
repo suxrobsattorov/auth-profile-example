@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 class AppTheme {
@@ -10,6 +11,9 @@ class AppTheme {
           seedColor: AppColors.primary,
           brightness: Brightness.light,
         ),
+        fontFamily: GoogleFonts.notoSans().fontFamily,
+        textTheme: GoogleFonts.notoSansTextTheme(),
+        primaryTextTheme: GoogleFonts.notoSansTextTheme(),
         scaffoldBackgroundColor: AppColors.background,
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
@@ -26,7 +30,7 @@ class AppTheme {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            textStyle: const TextStyle(
+            textStyle: GoogleFonts.notoSans(
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
@@ -69,7 +73,7 @@ class AppTheme {
           backgroundColor: AppColors.surface,
           indicatorColor: AppColors.primaryLight,
           labelTextStyle: WidgetStateProperty.resolveWith(
-            (states) => TextStyle(
+            (states) => GoogleFonts.notoSans(
               fontWeight: FontWeight.w600,
               color: states.contains(WidgetState.selected)
                   ? AppColors.primaryDark
@@ -87,7 +91,7 @@ class AppTheme {
         snackBarTheme: SnackBarThemeData(
           behavior: SnackBarBehavior.floating,
           backgroundColor: AppColors.textPrimary,
-          contentTextStyle: const TextStyle(color: AppColors.white),
+          contentTextStyle: GoogleFonts.notoSans(color: AppColors.white),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
