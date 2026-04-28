@@ -56,14 +56,16 @@ class ProfilePage extends StatelessWidget {
                 Container(
                   width: 62,
                   height: 62,
+                  padding: const EdgeInsets.all(10),
                   decoration: const BoxDecoration(
                     color: AppColors.primaryLight,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.logout_rounded,
+                  child: const AssetIcon(
+                    assetPath: AppConstants.logout,
                     color: AppColors.primaryDark,
-                    size: 30,
+                    fallback: Icons.add,
+                    size: 20,
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -256,22 +258,27 @@ class ProfilePage extends StatelessWidget {
             ),
             const SizedBox(height: 35),
             const _ProfileActionButton(
-              icon: Icons.edit_outlined,
+              icon: AppConstants.edit,
               title: "Profilni tahrirlash",
             ),
             const SizedBox(height: 10),
             const _ProfileActionButton(
-              icon: Icons.notifications_none_rounded,
+              icon: AppConstants.notification,
               title: "Bildirishnomalar",
             ),
             const SizedBox(height: 10),
             const _ProfileActionButton(
-              icon: Icons.help_outline_rounded,
+              icon: AppConstants.support,
               title: "Yordam markazi",
             ),
             const SizedBox(height: 10),
+            const _ProfileActionButton(
+              icon: AppConstants.info,
+              title: "Biz haqimizda",
+            ),
+            const SizedBox(height: 10),
             _ProfileActionButton(
-              icon: Icons.logout_rounded,
+              icon: AppConstants.logout,
               title: "Chiqish",
               isLogout: true,
               onTap: () => _showLogoutSheet(context),
@@ -285,7 +292,7 @@ class ProfilePage extends StatelessWidget {
 }
 
 class _ProfileActionButton extends StatelessWidget {
-  final IconData icon;
+  final String icon;
   final String title;
   final bool isLogout;
   final VoidCallback? onTap;
@@ -337,10 +344,11 @@ class _ProfileActionButton extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(
-                icon,
-                size: 24,
+              AssetIcon(
+                assetPath: icon,
                 color: isLogout ? AppColors.error : AppColors.black,
+                fallback: Icons.add,
+                size: 20,
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -348,6 +356,7 @@ class _ProfileActionButton extends StatelessWidget {
                   title,
                   style: AppTextStyles.titleMedium.copyWith(
                     color: isLogout ? AppColors.error : AppColors.black,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ),

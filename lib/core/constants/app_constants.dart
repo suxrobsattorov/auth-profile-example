@@ -13,4 +13,9 @@ class AppConstants {
   static const String homeIconAsset = 'assets/icons/home.png';
   static const String profileIconAsset = 'assets/icons/profile.png';
   static const String sms = 'assets/icons/sms.png';
+  static const String logout = 'assets/icons/logout.png';
+  static const String edit = 'assets/icons/edit.png';
+  static const String notification = 'assets/icons/notification.png';
+  static const String support = 'assets/icons/support.png';
+  static const String info = 'assets/icons/info.png';
 }
