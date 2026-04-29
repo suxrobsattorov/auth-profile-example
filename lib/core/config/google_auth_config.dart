@@ -12,8 +12,8 @@ class GoogleAuthConfig {
   // Yoki android/app/google-services.json ichida client_type:3 bo'lishi kifoya.
   static const String _serverClientId = String.fromEnvironment(
     'GOOGLE_SERVER_CLIENT_ID',
-    defaultValue: '',
-    // defaultValue: 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com',
+    defaultValue:
+        '913143229825-3jiikdmdukrehocm3ueq5qg53ht2dpqj.apps.googleusercontent.com',
   );
 
   static const List<String> serverScopes = <String>[
