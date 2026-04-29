@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:auth_profile_example/core/constants/constants.dart';
+import 'package:auth_profile_example/core/utils/phone_number_formatter.dart';
 import 'package:auth_profile_example/presentation/screens/auth/widgets/otp_digit_field.dart';
 import 'package:auth_profile_example/presentation/screens/main/main_shell_page.dart';
 import 'package:auth_profile_example/presentation/widgets/common/app_button.dart';
@@ -116,6 +117,11 @@ class _OtpPageState extends State<OtpPage> {
 
   @override
   Widget build(BuildContext context) {
+    final formattedPhoneNumber =
+        AppPhoneNumberFormatter.tryFormatSupportedInternational(
+      widget.phoneNumber,
+    );
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -168,7 +174,7 @@ class _OtpPageState extends State<OtpPage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        widget.phoneNumber,
+                        formattedPhoneNumber,
                         style: AppTextStyles.titleMedium.copyWith(
                           color: AppColors.primaryDark,
                         ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:auth_profile_example/core/constants/constants.dart';
+import 'package:auth_profile_example/core/utils/phone_number_formatter.dart';
 import 'package:auth_profile_example/presentation/screens/home/widgets/info_card.dart';
 import 'package:auth_profile_example/presentation/widgets/common/asset_icon.dart';
 
@@ -15,6 +16,9 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final formattedPhoneNumber =
+        AppPhoneNumberFormatter.tryFormatSupportedInternational(phoneNumber);
+
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
@@ -91,7 +95,7 @@ class HomePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    phoneNumber,
+                    formattedPhoneNumber,
                     style: AppTextStyles.titleLarge.copyWith(
                       color: AppColors.white,
                     ),

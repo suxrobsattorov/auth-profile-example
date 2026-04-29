@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:auth_profile_example/core/constants/constants.dart';
+import 'package:auth_profile_example/core/utils/phone_number_formatter.dart';
 import 'package:auth_profile_example/presentation/screens/auth/login_page.dart';
+import 'package:auth_profile_example/presentation/screens/profile/profile_edit_page.dart';
 import 'package:auth_profile_example/presentation/screens/profile/widgets/profile_info_row.dart';
 import 'package:auth_profile_example/presentation/widgets/common/asset_icon.dart';
 
@@ -17,6 +19,16 @@ class ProfilePage extends StatelessWidget {
     required this.countryName,
     required this.flagEmoji,
   });
+
+  void _openProfileEdit(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ProfileEditPage(
+          initialLocation: countryName,
+        ),
+      ),
+    );
+  }
 
   Future<void> _showLogoutSheet(BuildContext context) async {
     final shouldLogout = await showModalBottomSheet<bool>(
@@ -142,6 +154,9 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final formattedPhoneNumber =
+        AppPhoneNumberFormatter.tryFormatSupportedInternational(phoneNumber);
+
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
@@ -202,7 +217,7 @@ class ProfilePage extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              phoneNumber,
+                              formattedPhoneNumber,
                               style: AppTextStyles.bodyMedium.copyWith(
                                 color: Colors.grey.shade600,
                               ),
@@ -257,9 +272,10 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 35),
-            const _ProfileActionButton(
+            _ProfileActionButton(
               icon: AppConstants.edit,
               title: "Profilni tahrirlash",
+              onTap: () => _openProfileEdit(context),
             ),
             const SizedBox(height: 10),
             const _ProfileActionButton(
