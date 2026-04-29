@@ -18,6 +18,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         super(const AuthInitial()) {
     on<AuthRequestOtp>(_onRequestOtp);
     on<AuthVerifyOtp>(_onVerifyOtp);
+    on<AuthLogoutRequested>(_onLogoutRequested);
   }
 
   Future<void> _onRequestOtp(
@@ -32,7 +33,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(const AuthOtpSent());
     } on DioException catch (e) {
       final msg = _extractDioError(e);
-      debugPrint('[AuthBloc] DioException: $msg | status: ${e.response?.statusCode}');
+      debugPrint(
+          '[AuthBloc] DioException: $msg | status: ${e.response?.statusCode}');
       emit(AuthFailure(msg));
     } catch (e, st) {
       debugPrint('[AuthBloc] RequestOtp unknown error: $e\n$st');
@@ -44,7 +46,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthVerifyOtp event,
     Emitter<AuthState> emit,
   ) async {
-    debugPrint('[AuthBloc] VerifyOtp → phone: ${event.phone}, code: ${event.code}');
+    debugPrint(
+        '[AuthBloc] VerifyOtp → phone: ${event.phone}, code: ${event.code}');
     emit(const AuthLoading());
     try {
       final token = await _repository.verifyOtp(event.phone, event.code);
@@ -57,7 +60,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         countryName: event.countryName,
         flagEmoji: event.flagEmoji,
       );
-      debugPrint('[AuthBloc] Auth muvaffaqiyatli ✓ isNewUser: ${token.isNewUser}');
+      debugPrint(
+          '[AuthBloc] Auth muvaffaqiyatli ✓ isNewUser: ${token.isNewUser}');
       emit(AuthSuccess(
         accessToken: token.accessToken,
         refreshToken: token.refreshToken,
@@ -65,11 +69,43 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ));
     } on DioException catch (e) {
       final msg = _extractDioError(e);
-      debugPrint('[AuthBloc] DioException: $msg | status: ${e.response?.statusCode}');
+      debugPrint(
+          '[AuthBloc] DioException: $msg | status: ${e.response?.statusCode}');
       emit(AuthFailure(msg));
     } catch (e, st) {
       debugPrint('[AuthBloc] VerifyOtp unknown error: $e\n$st');
       emit(const AuthFailure('Xatolik yuz berdi. Qayta urinib ko\'ring.'));
+    }
+  }
+
+  Future<void> _onLogoutRequested(
+    AuthLogoutRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    debugPrint('[AuthBloc] Logout requested');
+    emit(const AuthLogoutInProgress());
+
+    final refreshToken = await _storage.getRefreshToken();
+    if (refreshToken == null || refreshToken.isEmpty) {
+      await _storage.clearAll();
+      emit(const AuthLoggedOut());
+      return;
+    }
+
+    try {
+      await _repository.logout(refreshToken);
+      await _storage.clearAll();
+      emit(const AuthLoggedOut());
+    } on DioException catch (e) {
+      final msg = _extractDioError(e);
+      debugPrint(
+        '[AuthBloc] Logout DioException: $msg | status: ${e.response?.statusCode}',
+      );
+      emit(AuthFailure(msg));
+    } catch (e, st) {
+      debugPrint('[AuthBloc] Logout unknown error: $e\n$st');
+      emit(const AuthFailure(
+          'Tizimdan chiqib bo\'lmadi. Qayta urinib ko\'ring.'));
     }
   }
 

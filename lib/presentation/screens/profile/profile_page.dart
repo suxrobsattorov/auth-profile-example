@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:auth_profile_example/application/auth/auth_bloc.dart';
+import 'package:auth_profile_example/application/auth/auth_event.dart';
+import 'package:auth_profile_example/application/auth/auth_state.dart';
 import 'package:auth_profile_example/application/profile/profile_bloc.dart';
 import 'package:auth_profile_example/application/profile/profile_event.dart';
 import 'package:auth_profile_example/application/profile/profile_state.dart';
@@ -8,7 +11,6 @@ import 'package:auth_profile_example/core/constants/constants.dart';
 import 'package:auth_profile_example/core/utils/phone_number_formatter.dart';
 import 'package:auth_profile_example/domain/di/injection.dart';
 import 'package:auth_profile_example/domain/model/user_profile.dart';
-import 'package:auth_profile_example/infrastructure/local/token_storage.dart';
 import 'package:auth_profile_example/presentation/screens/auth/login_page.dart';
 import 'package:auth_profile_example/presentation/screens/profile/profile_edit_page.dart';
 import 'package:auth_profile_example/presentation/screens/profile/widgets/profile_info_row.dart';
@@ -195,31 +197,52 @@ class _ProfilePageState extends State<ProfilePage> {
       return;
     }
 
-    await sl<TokenStorage>().clearAll();
-    if (!context.mounted) return;
-
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginPage()),
-      (route) => false,
-    );
+    context.read<AuthBloc>().add(const AuthLogoutRequested());
   }
 
   @override
   Widget build(BuildContext context) {
+    final isLoggingOut = context.select<AuthBloc, bool>(
+      (bloc) => bloc.state is AuthLogoutInProgress,
+    );
+
     return BlocProvider.value(
       value: _profileBloc,
-      child: BlocListener<ProfileBloc, ProfileState>(
-        listenWhen: (previous, current) =>
-            previous.errorMessage != current.errorMessage,
-        listener: (context, state) {
-          if (state.errorMessage == null) return;
-          if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
+      child: MultiBlocListener(
+        listeners: [
+          BlocListener<ProfileBloc, ProfileState>(
+            listenWhen: (previous, current) =>
+                previous.errorMessage != current.errorMessage,
+            listener: (context, state) {
+              if (state.errorMessage == null) return;
+              if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.errorMessage!)),
-          );
-          context.read<ProfileBloc>().add(const ProfileFeedbackCleared());
-        },
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.errorMessage!)),
+              );
+              context.read<ProfileBloc>().add(const ProfileFeedbackCleared());
+            },
+          ),
+          BlocListener<AuthBloc, AuthState>(
+            listener: (context, state) {
+              if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
+
+              if (state is AuthLoggedOut) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginPage()),
+                  (route) => false,
+                );
+                return;
+              }
+
+              if (state is AuthFailure) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(state.message)),
+                );
+              }
+            },
+          ),
+        ],
         child: BlocBuilder<ProfileBloc, ProfileState>(
           builder: (context, state) {
             final profile = state.profile;
@@ -230,11 +253,9 @@ class _ProfilePageState extends State<ProfilePage> {
             );
             final isHeaderLoading = state.isLoading;
             final avatarUrl = _resolveAvatarUrl(profile?.avatar);
-            final country =
-                _displayValue(profile?.country ?? widget.countryName);
+            final country = _displayValue(profile?.country);
             final email = _displayValue(profile?.email);
-            final authMethod =
-                _formatAuthMethods(profile?.authMethods ?? const ['phone']);
+            final authMethod = _formatAuthMethods(profile?.authMethods);
             final createdAt = _formatCreatedAt(profile?.createdAt);
             final lastLogin = _formatLastLogin(profile?.lastLogin);
 
@@ -408,7 +429,8 @@ class _ProfilePageState extends State<ProfilePage> {
                       icon: AppConstants.logout,
                       title: 'Chiqish',
                       isLogout: true,
-                      onTap: () => _showLogoutSheet(context),
+                      onTap:
+                          isLoggingOut ? null : () => _showLogoutSheet(context),
                     ),
                     const SizedBox(height: 115),
                   ],
@@ -426,8 +448,8 @@ class _ProfilePageState extends State<ProfilePage> {
     return text.isEmpty ? '-' : text;
   }
 
-  String _formatAuthMethods(List<String> methods) {
-    if (methods.isEmpty) return '-';
+  String _formatAuthMethods(List<String>? methods) {
+    if (methods == null || methods.isEmpty) return '-';
 
     final labels = methods.map((method) {
       switch (method.toLowerCase()) {

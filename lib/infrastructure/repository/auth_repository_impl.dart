@@ -36,6 +36,14 @@ class AuthRepositoryImpl implements IAuthRepository {
     );
   }
 
+  @override
+  Future<void> logout(String refreshToken) async {
+    await _dioClient.client(requireAuth: true).post(
+      '/api/users/logout/',
+      data: {'refresh': refreshToken},
+    );
+  }
+
   Map<String, dynamic> _parseJson(dynamic raw) {
     if (raw is Map<String, dynamic>) return raw;
     if (raw is Map) return Map<String, dynamic>.from(raw);

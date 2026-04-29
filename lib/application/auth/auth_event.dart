@@ -32,3 +32,7 @@ class AuthVerifyOtp extends AuthEvent {
   @override
   List<Object> get props => [phone, code, countryName, flagEmoji];
 }
+
+class AuthLogoutRequested extends AuthEvent {
+  const AuthLogoutRequested();
+}
