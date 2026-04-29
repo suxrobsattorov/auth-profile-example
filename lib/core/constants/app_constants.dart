@@ -1,9 +1,10 @@
 class AppConstants {
   AppConstants._();
 
-  static const String appName = 'Logo Auth';
+  static const String appName = 'Profile';
 
-  static const String baseUrl = 'https://api.example.com/v1';
+  /// API
+  static const String baseUrl = 'https://0087-213-230-112-27.ngrok-free.app';
   static const int otpLength = 4;
 
   /// Store URLs

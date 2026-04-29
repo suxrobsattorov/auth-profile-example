@@ -1,7 +1,10 @@
+import 'package:alice/alice.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'constants/constants.dart';
-import '../infrastructure/network/dio_client.dart';
+import '../application/auth/auth_bloc.dart';
+import '../domain/di/injection.dart';
 import '../presentation/screens/auth/login_page.dart';
 
 class App extends StatelessWidget {
@@ -9,12 +12,15 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: AppConstants.appName,
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      navigatorKey: alice.getNavigatorKey(),
-      home: const LoginPage(),
+    return BlocProvider(
+      create: (_) => sl<AuthBloc>(),
+      child: MaterialApp(
+        title: AppConstants.appName,
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        navigatorKey: sl<Alice>().getNavigatorKey(),
+        home: const LoginPage(),
+      ),
     );
   }
 }

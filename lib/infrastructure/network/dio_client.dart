@@ -8,9 +8,11 @@ import 'package:flutter/foundation.dart';
 
 import '../../core/constants/app_constants.dart';
 
-final Alice alice = Alice();
-
 class DioClient {
+  final Alice alice;
+
+  DioClient(this.alice);
+
   Dio client({bool requireAuth = false}) {
     final dio = Dio(
       BaseOptions(
@@ -21,6 +23,7 @@ class DioClient {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
         },
       ),
     );
@@ -34,6 +37,16 @@ class DioClient {
     final adapter = AliceDioAdapter();
     alice.addAdapter(adapter);
     dio.interceptors.add(adapter);
+
+    dio.interceptors.add(
+      LogInterceptor(
+        requestBody: true,
+        responseBody: true,
+        requestHeader: false,
+        responseHeader: false,
+        logPrint: (o) => debugPrint('[DIO] $o'),
+      ),
+    );
 
     return dio;
   }
