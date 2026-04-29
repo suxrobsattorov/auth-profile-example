@@ -13,6 +13,7 @@ import 'package:auth_profile_example/presentation/widgets/background_orb.dart';
 import 'package:auth_profile_example/presentation/screens/auth/widgets/login_form.dart';
 import 'package:auth_profile_example/presentation/screens/auth/widgets/or_divider.dart';
 import 'package:auth_profile_example/presentation/screens/auth/widgets/social_auth_button.dart';
+import 'package:auth_profile_example/presentation/widgets/common/app_button.dart';
 import 'package:auth_profile_example/infrastructure/local/token_storage.dart';
 
 class LoginPage extends StatefulWidget {
@@ -32,9 +33,97 @@ class _LoginPageState extends State<LoginPage> {
     context.read<AuthBloc>().add(AuthRequestOtp(phoneNumber));
   }
 
-  void _showSocialMessage(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Bu tugma hozircha demo rejimida turibdi.')),
+  Future<void> _showAppleComingSoonDialog() {
+    FocusScope.of(context).unfocus();
+
+    return showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: const [
+                BoxShadow(
+                  color: AppColors.shadow,
+                  blurRadius: 30,
+                  offset: Offset(0, 18),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceMuted,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.divider),
+                  ),
+                  child: Image.asset(
+                    AppConstants.appleAsset,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'Apple orqali kirish tez orada',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.headlineSmall,
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Hozircha bu usulni yoqa olmaymiz, sababi Apple Developer account hali olinmagan. Account tayyor bo‘lishi bilan Apple orqali kirish ham ilovaga qo‘shiladi.',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.bodyMedium,
+                ),
+                const SizedBox(height: 18),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.backgroundStrong,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.schedule_rounded,
+                        color: AppColors.primaryDark,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Tez orada bu imkoniyat ham ishga tushadi.',
+                          style: AppTextStyles.titleMedium.copyWith(
+                            color: AppColors.primaryDark,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                AppButton(
+                  label: 'Tushunarli',
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -174,7 +263,7 @@ class _LoginPageState extends State<LoginPage> {
                                     SocialAuthButton(
                                       label: 'Apple orqali kirish',
                                       imagePath: AppConstants.appleAsset,
-                                      onTap: () => _showSocialMessage(context),
+                                      onTap: _showAppleComingSoonDialog,
                                       isLoading: false,
                                     ),
                                   ],
