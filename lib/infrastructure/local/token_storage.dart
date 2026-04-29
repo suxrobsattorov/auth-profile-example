@@ -3,6 +3,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 class TokenStorage {
   static const _accessKey = 'access_token';
   static const _refreshKey = 'refresh_token';
+  static const _phoneKey = 'user_phone';
+  static const _countryNameKey = 'user_country_name';
+  static const _flagEmojiKey = 'user_flag_emoji';
 
   Future<void> saveTokens({
     required String access,
@@ -11,6 +14,17 @@ class TokenStorage {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_accessKey, access);
     await prefs.setString(_refreshKey, refresh);
+  }
+
+  Future<void> saveUserInfo({
+    required String phone,
+    required String countryName,
+    required String flagEmoji,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_phoneKey, phone);
+    await prefs.setString(_countryNameKey, countryName);
+    await prefs.setString(_flagEmojiKey, flagEmoji);
   }
 
   Future<String?> getAccessToken() async {
@@ -23,14 +37,32 @@ class TokenStorage {
     return prefs.getString(_refreshKey);
   }
 
+  Future<String?> getPhone() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_phoneKey);
+  }
+
+  Future<String?> getCountryName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_countryNameKey);
+  }
+
+  Future<String?> getFlagEmoji() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_flagEmojiKey);
+  }
+
   Future<bool> hasToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.containsKey(_accessKey);
   }
 
-  Future<void> clearTokens() async {
+  Future<void> clearAll() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_accessKey);
     await prefs.remove(_refreshKey);
+    await prefs.remove(_phoneKey);
+    await prefs.remove(_countryNameKey);
+    await prefs.remove(_flagEmojiKey);
   }
 }

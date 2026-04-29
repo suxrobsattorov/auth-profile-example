@@ -19,9 +19,16 @@ class AuthRequestOtp extends AuthEvent {
 class AuthVerifyOtp extends AuthEvent {
   final String phone;
   final String code;
+  final String countryName;
+  final String flagEmoji;
 
-  const AuthVerifyOtp({required this.phone, required this.code});
+  const AuthVerifyOtp({
+    required this.phone,
+    required this.code,
+    required this.countryName,
+    required this.flagEmoji,
+  });
 
   @override
-  List<Object> get props => [phone, code];
+  List<Object> get props => [phone, code, countryName, flagEmoji];
 }

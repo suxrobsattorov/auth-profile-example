@@ -52,6 +52,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         access: token.accessToken,
         refresh: token.refreshToken,
       );
+      await _storage.saveUserInfo(
+        phone: event.phone,
+        countryName: event.countryName,
+        flagEmoji: event.flagEmoji,
+      );
       debugPrint('[AuthBloc] Auth muvaffaqiyatli ✓ isNewUser: ${token.isNewUser}');
       emit(AuthSuccess(
         accessToken: token.accessToken,

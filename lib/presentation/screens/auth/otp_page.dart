@@ -88,9 +88,12 @@ class _OtpPageState extends State<OtpPage> {
       return;
     }
     final code = _controllers.map((c) => c.text.trim()).join();
-    context
-        .read<AuthBloc>()
-        .add(AuthVerifyOtp(phone: widget.phoneNumber, code: code));
+    context.read<AuthBloc>().add(AuthVerifyOtp(
+          phone: widget.phoneNumber,
+          code: code,
+          countryName: widget.countryName,
+          flagEmoji: widget.flagEmoji,
+        ));
   }
 
   void _onResendPressed() {

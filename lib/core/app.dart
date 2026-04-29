@@ -6,9 +6,21 @@ import 'constants/constants.dart';
 import '../application/auth/auth_bloc.dart';
 import '../domain/di/injection.dart';
 import '../presentation/screens/auth/login_page.dart';
+import '../presentation/screens/main/main_shell_page.dart';
 
 class App extends StatelessWidget {
-  const App({super.key});
+  final bool isLoggedIn;
+  final String? phone;
+  final String? countryName;
+  final String? flagEmoji;
+
+  const App({
+    super.key,
+    required this.isLoggedIn,
+    this.phone,
+    this.countryName,
+    this.flagEmoji,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +31,13 @@ class App extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         navigatorKey: sl<Alice>().getNavigatorKey(),
-        home: const LoginPage(),
+        home: isLoggedIn
+            ? MainShellPage(
+                phoneNumber: phone!,
+                countryName: countryName!,
+                flagEmoji: flagEmoji!,
+              )
+            : const LoginPage(),
       ),
     );
   }

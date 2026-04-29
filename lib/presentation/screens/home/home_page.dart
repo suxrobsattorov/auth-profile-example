@@ -1,7 +1,9 @@
+import 'package:alice/alice.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:auth_profile_example/core/constants/constants.dart';
 import 'package:auth_profile_example/core/utils/phone_number_formatter.dart';
+import 'package:auth_profile_example/domain/di/injection.dart';
 import 'package:auth_profile_example/presentation/screens/home/widgets/info_card.dart';
 import 'package:auth_profile_example/presentation/widgets/common/asset_icon.dart';
 
@@ -114,13 +116,20 @@ class HomePage extends StatelessWidget {
             const InfoCard(
               icon: Icons.shield_rounded,
               title: 'OTP muvaffaqiyatli tasdiqlandi',
-              subtitle: 'Asosiy qismga o‘tdingiz.',
+              subtitle: 'Asosiy qismga o\'tdingiz.',
             ),
             const SizedBox(height: 16),
             const InfoCard(
               icon: Icons.swap_horiz_rounded,
               title: 'Pastdagi navigation ishlaydi',
-              subtitle: 'bemalol almashtiring.',
+              subtitle: 'Bemalol almashtiring.',
+            ),
+            const SizedBox(height: 16),
+            InfoCard(
+              icon: Icons.bug_report_rounded,
+              title: 'HTTP Inspector',
+              subtitle: 'Barcha so\'rov va javoblarni ko\'rish.',
+              onTap: () => sl<Alice>().showInspector(),
             ),
           ],
         ),
