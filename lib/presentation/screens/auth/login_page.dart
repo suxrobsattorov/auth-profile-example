@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -210,7 +211,9 @@ class _LoginPageState extends State<LoginPage> {
                           child: Column(
                             children: [
                               GestureDetector(
-                                onTap: () => sl<Alice>().showInspector(),
+                                onTap: kDebugMode
+                                    ? () => sl<Alice>().showInspector()
+                                    : null,
                                 child: Image.asset(
                                   AppConstants.logoAsset,
                                   width: 155,

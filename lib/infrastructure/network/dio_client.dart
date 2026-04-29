@@ -5,7 +5,6 @@ import 'package:alice_dio/alice_dio_adapter.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:flutter/foundation.dart';
-
 import 'package:auth_profile_example/infrastructure/local/token_storage.dart';
 
 import '../../core/constants/app_constants.dart';
@@ -55,15 +54,17 @@ class DioClient {
       );
     }
 
-    dio.interceptors.add(
-      LogInterceptor(
-        requestBody: true,
-        responseBody: true,
-        requestHeader: false,
-        responseHeader: false,
-        logPrint: (o) => debugPrint('[DIO] $o'),
-      ),
-    );
+    if (kDebugMode) {
+      dio.interceptors.add(
+        LogInterceptor(
+          requestBody: true,
+          responseBody: true,
+          requestHeader: false,
+          responseHeader: false,
+          logPrint: (o) => debugPrint('[DIO] $o'),
+        ),
+      );
+    }
 
     return dio;
   }
