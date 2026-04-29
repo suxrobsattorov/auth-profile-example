@@ -171,57 +171,67 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _AvatarSection(
-                pickedImage: _pickedImage,
-                onPickImage: _showImageSourceSheet,
-              ),
-              const SizedBox(height: 28),
-              _SectionCard(
-                children: [
-                  _EditField(
-                    label: 'Ism',
-                    controller: _firstNameController,
-                    hintText: 'Ismingizni kiriting',
-                    keyboardType: TextInputType.name,
-                    textCapitalization: TextCapitalization.words,
-                  ),
-                  const SizedBox(height: 12),
-                  _EditField(
-                    label: 'Familiya',
-                    controller: _lastNameController,
-                    hintText: 'Familiyangizni kiriting',
-                    keyboardType: TextInputType.name,
-                    textCapitalization: TextCapitalization.words,
-                  ),
-                  const SizedBox(height: 12),
-                  _EditField(
-                    label: 'Email',
-                    controller: _emailController,
-                    hintText: 'example@mail.com',
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 12),
-                  _EditField(
-                    label: 'Hudud',
-                    controller: _locationController,
-                    hintText: 'Hududingizni kiriting',
-                    textCapitalization: TextCapitalization.words,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-              AppButton(
-                label: 'Saqlash',
-                onPressed: _save,
-                isLoading: _isSaving,
-              ),
-              const SizedBox(height: 24),
-            ],
+        child: Container(
+          height: double.infinity,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppColors.backgroundStrong, AppColors.background],
+              begin: Alignment.bottomCenter,
+              end: Alignment.topCenter,
+            ),
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _AvatarSection(
+                  pickedImage: _pickedImage,
+                  onPickImage: _showImageSourceSheet,
+                ),
+                const SizedBox(height: 28),
+                _SectionCard(
+                  children: [
+                    _EditField(
+                      label: 'Ism',
+                      controller: _firstNameController,
+                      hintText: 'Ismingizni kiriting',
+                      keyboardType: TextInputType.name,
+                      textCapitalization: TextCapitalization.words,
+                    ),
+                    const SizedBox(height: 10),
+                    _EditField(
+                      label: 'Familiya',
+                      controller: _lastNameController,
+                      hintText: 'Familiyangizni kiriting',
+                      keyboardType: TextInputType.name,
+                      textCapitalization: TextCapitalization.words,
+                    ),
+                    const SizedBox(height: 10),
+                    _EditField(
+                      label: 'Email',
+                      controller: _emailController,
+                      hintText: 'example@mail.com',
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 10),
+                    _EditField(
+                      label: 'Hudud',
+                      controller: _locationController,
+                      hintText: 'Hududingizni kiriting',
+                      textCapitalization: TextCapitalization.words,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 35),
+                AppButton(
+                  label: 'Saqlash',
+                  onPressed: _save,
+                  isLoading: _isSaving,
+                ),
+                const SizedBox(height: 40),
+              ],
+            ),
           ),
         ),
       ),
@@ -402,11 +412,11 @@ class _EditField extends StatelessWidget {
         Text(
           label,
           style: AppTextStyles.bodySmall.copyWith(
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w500,
             color: AppColors.textSecondary,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 5),
         TextField(
           controller: controller,
           keyboardType: keyboardType,
