@@ -69,7 +69,6 @@ class GoogleAuthServiceImpl implements GoogleAuthService {
     try {
       await _initializeFuture;
       await _googleSignIn.signOut();
-    } on GoogleSignInException {
     } on PlatformException catch (e, st) {
       debugPrint('[GoogleAuth] signOut platform error ignored: $e\n$st');
     } catch (e, st) {
