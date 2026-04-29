@@ -2,17 +2,20 @@ import 'package:alice/alice.dart';
 import 'package:get_it/get_it.dart';
 
 import 'package:auth_profile_example/application/auth/auth_bloc.dart';
+import 'package:auth_profile_example/application/profile/profile_bloc.dart';
 import 'package:auth_profile_example/domain/interface/auth.dart';
+import 'package:auth_profile_example/domain/interface/profile.dart';
 import 'package:auth_profile_example/infrastructure/local/token_storage.dart';
 import 'package:auth_profile_example/infrastructure/network/dio_client.dart';
 import 'package:auth_profile_example/infrastructure/repository/auth_repository_impl.dart';
+import 'package:auth_profile_example/infrastructure/repository/profile_repository_impl.dart';
 
 final sl = GetIt.instance;
 
 Future<void> initDependencies() async {
   _registerAlice();
-  _registerNetwork();
   _registerStorage();
+  _registerNetwork();
   _registerRepositories();
   _registerBlocs();
 }
@@ -22,7 +25,9 @@ void _registerAlice() {
 }
 
 void _registerNetwork() {
-  sl.registerLazySingleton<DioClient>(() => DioClient(sl<Alice>()));
+  sl.registerLazySingleton<DioClient>(
+    () => DioClient(sl<Alice>(), sl<TokenStorage>()),
+  );
 }
 
 void _registerStorage() {
@@ -33,6 +38,9 @@ void _registerRepositories() {
   sl.registerLazySingleton<IAuthRepository>(
     () => AuthRepositoryImpl(sl<DioClient>()),
   );
+  sl.registerLazySingleton<IProfileRepository>(
+    () => ProfileRepositoryImpl(sl<DioClient>()),
+  );
 }
 
 void _registerBlocs() {
@@ -40,6 +48,11 @@ void _registerBlocs() {
     () => AuthBloc(
       repository: sl<IAuthRepository>(),
       storage: sl<TokenStorage>(),
+    ),
+  );
+  sl.registerFactory<ProfileBloc>(
+    () => ProfileBloc(
+      repository: sl<IProfileRepository>(),
     ),
   );
 }

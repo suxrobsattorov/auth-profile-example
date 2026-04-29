@@ -1,8 +1,14 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+
+import 'package:auth_profile_example/application/profile/profile_bloc.dart';
+import 'package:auth_profile_example/application/profile/profile_event.dart';
+import 'package:auth_profile_example/application/profile/profile_state.dart';
 import 'package:auth_profile_example/core/constants/constants.dart';
+import 'package:auth_profile_example/domain/model/profile_update_request.dart';
 import 'package:auth_profile_example/presentation/widgets/common/app_button.dart';
 import 'package:auth_profile_example/presentation/widgets/common/asset_icon.dart';
 
@@ -11,6 +17,7 @@ class ProfileEditPage extends StatefulWidget {
   final String initialLastName;
   final String initialEmail;
   final String initialLocation;
+  final String? initialAvatarUrl;
 
   const ProfileEditPage({
     super.key,
@@ -18,6 +25,7 @@ class ProfileEditPage extends StatefulWidget {
     this.initialLastName = '',
     this.initialEmail = '',
     this.initialLocation = '',
+    this.initialAvatarUrl,
   });
 
   @override
@@ -31,7 +39,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   late final TextEditingController _locationController;
 
   File? _pickedImage;
-  bool _isSaving = false;
 
   @override
   void initState() {
@@ -143,94 +150,132 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     );
   }
 
-  Future<void> _save() async {
+  void _save() {
     FocusScope.of(context).unfocus();
-    setState(() => _isSaving = true);
-    await Future.delayed(const Duration(milliseconds: 800));
-    if (!mounted) return;
-    setState(() => _isSaving = false);
-    Navigator.of(context).pop();
+
+    context.read<ProfileBloc>().add(
+          ProfileUpdateSubmitted(
+            ProfileUpdateRequest(
+              firstName: _firstNameController.text,
+              lastName: _lastNameController.text,
+              email: _emailController.text,
+              includeEmail: _emailController.text.trim().isNotEmpty ||
+                  widget.initialEmail.trim().isNotEmpty,
+              country: _locationController.text,
+              avatarFile: _pickedImage,
+            ),
+          ),
+        );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            size: 18,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        title: const Text(
-          'Profilni tahrirlash',
-          style: AppTextStyles.titleLarge,
-        ),
-      ),
-      body: SafeArea(
-        child: Container(
-          height: double.infinity,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [AppColors.backgroundStrong, AppColors.background],
-              begin: Alignment.bottomCenter,
-              end: Alignment.topCenter,
+    final isSaving = context.select(
+      (ProfileBloc bloc) => bloc.state.isSaving,
+    );
+
+    return BlocListener<ProfileBloc, ProfileState>(
+      listenWhen: (previous, current) =>
+          previous.errorMessage != current.errorMessage ||
+          previous.successMessage != current.successMessage,
+      listener: (context, state) {
+        if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
+
+        if (state.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.errorMessage!)),
+          );
+          context.read<ProfileBloc>().add(const ProfileFeedbackCleared());
+          return;
+        }
+
+        if (state.successMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.successMessage!)),
+          );
+          context.read<ProfileBloc>().add(const ProfileFeedbackCleared());
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          centerTitle: true,
+          leading: IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              size: 18,
+              color: AppColors.textPrimary,
             ),
           ),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _AvatarSection(
-                  pickedImage: _pickedImage,
-                  onPickImage: _showImageSourceSheet,
-                ),
-                const SizedBox(height: 28),
-                _SectionCard(
-                  children: [
-                    _EditField(
-                      label: 'Ism',
-                      controller: _firstNameController,
-                      hintText: 'Ismingizni kiriting',
-                      keyboardType: TextInputType.name,
-                      textCapitalization: TextCapitalization.words,
-                    ),
-                    const SizedBox(height: 10),
-                    _EditField(
-                      label: 'Familiya',
-                      controller: _lastNameController,
-                      hintText: 'Familiyangizni kiriting',
-                      keyboardType: TextInputType.name,
-                      textCapitalization: TextCapitalization.words,
-                    ),
-                    const SizedBox(height: 10),
-                    _EditField(
-                      label: 'Email',
-                      controller: _emailController,
-                      hintText: 'example@mail.com',
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 10),
-                    _EditField(
-                      label: 'Hudud',
-                      controller: _locationController,
-                      hintText: 'Hududingizni kiriting',
-                      textCapitalization: TextCapitalization.words,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 35),
-                AppButton(
-                  label: 'Saqlash',
-                  onPressed: _save,
-                  isLoading: _isSaving,
-                ),
-                const SizedBox(height: 40),
-              ],
+          title: const Text(
+            'Profilni tahrirlash',
+            style: AppTextStyles.titleLarge,
+          ),
+        ),
+        body: SafeArea(
+          child: Container(
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppColors.backgroundStrong, AppColors.background],
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+              ),
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _AvatarSection(
+                    pickedImage: _pickedImage,
+                    initialAvatarUrl: widget.initialAvatarUrl,
+                    onPickImage: _showImageSourceSheet,
+                  ),
+                  const SizedBox(height: 28),
+                  _SectionCard(
+                    children: [
+                      _EditField(
+                        label: 'Ism',
+                        controller: _firstNameController,
+                        hintText: 'Ismingizni kiriting',
+                        keyboardType: TextInputType.name,
+                        textCapitalization: TextCapitalization.words,
+                      ),
+                      const SizedBox(height: 10),
+                      _EditField(
+                        label: 'Familiya',
+                        controller: _lastNameController,
+                        hintText: 'Familiyangizni kiriting',
+                        keyboardType: TextInputType.name,
+                        textCapitalization: TextCapitalization.words,
+                      ),
+                      const SizedBox(height: 10),
+                      _EditField(
+                        label: 'Email',
+                        controller: _emailController,
+                        hintText: 'example@mail.com',
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+                      const SizedBox(height: 10),
+                      _EditField(
+                        label: 'Hudud',
+                        controller: _locationController,
+                        hintText: 'Hududingizni kiriting',
+                        textCapitalization: TextCapitalization.words,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 35),
+                  AppButton(
+                    label: 'Saqlash',
+                    onPressed: isSaving ? null : _save,
+                    isLoading: isSaving,
+                  ),
+                  const SizedBox(height: 40),
+                ],
+              ),
             ),
           ),
         ),
@@ -241,15 +286,24 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
 class _AvatarSection extends StatelessWidget {
   final File? pickedImage;
+  final String? initialAvatarUrl;
   final VoidCallback onPickImage;
 
   const _AvatarSection({
     required this.pickedImage,
+    required this.initialAvatarUrl,
     required this.onPickImage,
   });
 
   @override
   Widget build(BuildContext context) {
+    final resolvedAvatarUrl = _resolveAvatarUrl(initialAvatarUrl);
+    final ImageProvider<Object>? backgroundImage = pickedImage != null
+        ? FileImage(pickedImage!)
+        : resolvedAvatarUrl != null
+            ? NetworkImage(resolvedAvatarUrl)
+            : null;
+
     return Center(
       child: Stack(
         clipBehavior: Clip.none,
@@ -257,9 +311,8 @@ class _AvatarSection extends StatelessWidget {
           CircleAvatar(
             radius: 63,
             backgroundColor: AppColors.primaryLight,
-            backgroundImage:
-                pickedImage != null ? FileImage(pickedImage!) : null,
-            child: pickedImage == null
+            backgroundImage: backgroundImage,
+            child: backgroundImage == null
                 ? const AssetIcon(
                     assetPath: AppConstants.profileIconAsset,
                     size: 52,
@@ -279,7 +332,7 @@ class _AvatarSection extends StatelessWidget {
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.primary,
+                  color: AppColors.white,
                   border: Border.all(color: AppColors.white, width: 2.5),
                   boxShadow: const [
                     BoxShadow(
@@ -292,7 +345,7 @@ class _AvatarSection extends StatelessWidget {
                 child: const AssetIcon(
                   assetPath: AppConstants.camera,
                   size: 18,
-                  color: AppColors.white,
+                  color: AppColors.primary,
                   fallback: Icons.camera_alt_rounded,
                 ),
               ),
@@ -434,4 +487,16 @@ class _EditField extends StatelessWidget {
       ],
     );
   }
+}
+
+String? _resolveAvatarUrl(String? value) {
+  final avatar = value?.trim() ?? '';
+  if (avatar.isEmpty) return null;
+
+  final uri = Uri.tryParse(avatar);
+  if (uri != null && uri.hasScheme) {
+    return avatar;
+  }
+
+  return '${AppConstants.baseUrl}$avatar';
 }

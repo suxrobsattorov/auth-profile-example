@@ -1,6 +1,5 @@
 import 'package:alice/alice.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:auth_profile_example/core/constants/constants.dart';
 import 'package:auth_profile_example/core/utils/phone_number_formatter.dart';
 import 'package:auth_profile_example/domain/di/injection.dart';
@@ -16,12 +15,6 @@ class HomePage extends StatelessWidget {
     required this.phoneNumber,
     required this.flagEmoji,
   });
-
-  Future<void> _launchUrl(String url) async {
-    try {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    } catch (_) {}
-  }
 
   @override
   Widget build(BuildContext context) {

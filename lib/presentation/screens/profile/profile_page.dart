@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:auth_profile_example/application/profile/profile_bloc.dart';
+import 'package:auth_profile_example/application/profile/profile_event.dart';
+import 'package:auth_profile_example/application/profile/profile_state.dart';
 import 'package:auth_profile_example/core/constants/constants.dart';
 import 'package:auth_profile_example/core/utils/phone_number_formatter.dart';
+import 'package:auth_profile_example/domain/di/injection.dart';
+import 'package:auth_profile_example/domain/model/user_profile.dart';
+import 'package:auth_profile_example/infrastructure/local/token_storage.dart';
 import 'package:auth_profile_example/presentation/screens/auth/login_page.dart';
 import 'package:auth_profile_example/presentation/screens/profile/profile_edit_page.dart';
 import 'package:auth_profile_example/presentation/screens/profile/widgets/profile_info_row.dart';
@@ -8,23 +16,64 @@ import 'package:auth_profile_example/presentation/widgets/common/asset_icon.dart
 
 import '../../widgets/background_orb.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   final String phoneNumber;
   final String countryName;
   final String flagEmoji;
+  final bool isActive;
 
   const ProfilePage({
     super.key,
     required this.phoneNumber,
     required this.countryName,
     required this.flagEmoji,
+    this.isActive = false,
   });
 
-  void _openProfileEdit(BuildContext context) {
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  late final ProfileBloc _profileBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _profileBloc = sl<ProfileBloc>();
+
+    if (widget.isActive) {
+      _profileBloc.add(const ProfileRequested());
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant ProfilePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (!oldWidget.isActive && widget.isActive) {
+      _profileBloc.add(const ProfileRequested());
+    }
+  }
+
+  @override
+  void dispose() {
+    _profileBloc.close();
+    super.dispose();
+  }
+
+  void _openProfileEdit(BuildContext context, UserProfile profile) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => ProfileEditPage(
-          initialLocation: countryName,
+        builder: (_) => BlocProvider.value(
+          value: _profileBloc,
+          child: ProfileEditPage(
+            initialFirstName: profile.firstName,
+            initialLastName: profile.lastName,
+            initialEmail: profile.email ?? '',
+            initialLocation: profile.country,
+            initialAvatarUrl: profile.avatar,
+          ),
         ),
       ),
     );
@@ -107,7 +156,7 @@ class ProfilePage extends StatelessWidget {
                             elevation: 0,
                           ),
                           child: Text(
-                            "Yo'q",
+                            'Yo\'q',
                             style: AppTextStyles.labelLarge.copyWith(
                               color: AppColors.textHint,
                             ),
@@ -146,6 +195,9 @@ class ProfilePage extends StatelessWidget {
       return;
     }
 
+    await sl<TokenStorage>().clearAll();
+    if (!context.mounted) return;
+
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginPage()),
       (route) => false,
@@ -154,155 +206,369 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final formattedPhoneNumber =
-        AppPhoneNumberFormatter.tryFormatSupportedInternational(phoneNumber);
+    return BlocProvider.value(
+      value: _profileBloc,
+      child: BlocListener<ProfileBloc, ProfileState>(
+        listenWhen: (previous, current) =>
+            previous.errorMessage != current.errorMessage,
+        listener: (context, state) {
+          if (state.errorMessage == null) return;
+          if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
 
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        child: Column(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(35),
-                boxShadow: const [
-                  BoxShadow(
-                    color: AppColors.shadow,
-                    blurRadius: 28,
-                    spreadRadius: 2,
-                    offset: Offset(0, 14),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(35),
-                child: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.backgroundStrong,
-                        AppColors.background
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: Stack(
-                    children: [
-                      const BackgroundOrb(
-                        top: -100,
-                        right: -60,
-                        size: 200,
-                        color: AppColors.primaryLight,
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.errorMessage!)),
+          );
+          context.read<ProfileBloc>().add(const ProfileFeedbackCleared());
+        },
+        child: BlocBuilder<ProfileBloc, ProfileState>(
+          builder: (context, state) {
+            final profile = state.profile;
+            final phoneNumber = profile?.phone ?? widget.phoneNumber;
+            final formattedPhoneNumber =
+                AppPhoneNumberFormatter.tryFormatSupportedInternational(
+              phoneNumber,
+            );
+            final isHeaderLoading = state.isLoading;
+            final avatarUrl = _resolveAvatarUrl(profile?.avatar);
+            final country =
+                _displayValue(profile?.country ?? widget.countryName);
+            final email = _displayValue(profile?.email);
+            final authMethod =
+                _formatAuthMethods(profile?.authMethods ?? const ['phone']);
+            final createdAt = _formatCreatedAt(profile?.createdAt);
+            final lastLogin = _formatLastLogin(profile?.lastLogin);
+
+            return SafeArea(
+              child: SingleChildScrollView(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                child: Column(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(35),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: AppColors.shadow,
+                            blurRadius: 28,
+                            spreadRadius: 2,
+                            offset: Offset(0, 14),
+                          ),
+                        ],
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            const CircleAvatar(
-                              radius: 42,
-                              backgroundColor: AppColors.primaryLight,
-                              child: AssetIcon(
-                                assetPath: AppConstants.profileIconAsset,
-                                size: 35,
-                                color: AppColors.primaryDark,
-                                fallback: Icons.person_rounded,
-                              ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(35),
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.backgroundStrong,
+                                AppColors.background,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'Shaxsiy profil',
-                              style: AppTextStyles.headlineSmall,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              formattedPhoneNumber,
-                              style: AppTextStyles.bodyMedium.copyWith(
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
+                          ),
+                          child: Stack(
+                            children: [
+                              const BackgroundOrb(
+                                top: -100,
+                                right: -60,
+                                size: 200,
                                 color: AppColors.primaryLight,
-                                borderRadius: BorderRadius.circular(99),
                               ),
-                              child: Text(
-                                'Faol foydalanuvchi',
-                                style: AppTextStyles.labelMedium.copyWith(
-                                    color: AppColors.primary, fontSize: 12),
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 42,
+                                      backgroundColor: AppColors.primaryLight,
+                                      backgroundImage: avatarUrl != null
+                                          ? NetworkImage(avatarUrl)
+                                          : null,
+                                      child: avatarUrl == null
+                                          ? const AssetIcon(
+                                              assetPath:
+                                                  AppConstants.profileIconAsset,
+                                              size: 35,
+                                              color: AppColors.primaryDark,
+                                              fallback: Icons.person_rounded,
+                                            )
+                                          : null,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _ProfileShimmerOverlay(
+                                      enabled: isHeaderLoading,
+                                      borderRadius: 14,
+                                      child: Text(
+                                        profile?.resolvedFullName.isNotEmpty ==
+                                                true
+                                            ? profile!.resolvedFullName
+                                            : 'Shaxsiy profil',
+                                        style: AppTextStyles.headlineSmall,
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    _ProfileShimmerOverlay(
+                                      enabled: isHeaderLoading,
+                                      borderRadius: 10,
+                                      child: Text(
+                                        formattedPhoneNumber,
+                                        style:
+                                            AppTextStyles.bodyMedium.copyWith(
+                                          color: Colors.grey.shade600,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    _ProfileShimmerOverlay(
+                                      enabled: isHeaderLoading,
+                                      borderRadius: 99,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 20,
+                                          vertical: 8,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primaryLight,
+                                          borderRadius:
+                                              BorderRadius.circular(99),
+                                        ),
+                                        child: Text(
+                                          'Faol foydalanuvchi',
+                                          style: AppTextStyles.labelMedium
+                                              .copyWith(
+                                            color: AppColors.primary,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    ProfileInfoRow(
+                                      title: 'Hudud',
+                                      value: country,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    ProfileInfoRow(
+                                      title: 'Email',
+                                      value: email,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    ProfileInfoRow(
+                                      title: 'Kirish usuli',
+                                      value: authMethod,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    ProfileInfoRow(
+                                      title: 'Ro‘yxatdan o‘tgan sana',
+                                      value: createdAt,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    ProfileInfoRow(
+                                      title: 'Oxirgi kirish',
+                                      value: lastLogin,
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 24),
-                            ProfileInfoRow(
-                              title: 'Hudud',
-                              value: countryName,
-                            ),
-                            const SizedBox(height: 10),
-                            const ProfileInfoRow(
-                              title: 'Email',
-                              value: '-',
-                            ),
-                            const SizedBox(height: 10),
-                            const ProfileInfoRow(
-                              title: 'Kirish usuli',
-                              value: 'Telefon + OTP',
-                            ),
-                            const SizedBox(height: 10),
-                            const ProfileInfoRow(
-                              title: 'Ro‘yxatdan o‘tgan sana',
-                              value: '12 Fevral 2026',
-                            ),
-                            const SizedBox(height: 10),
-                            const ProfileInfoRow(
-                              title: 'Oxirgi kirish',
-                              value: 'Bugun 14:20',
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 35),
+                    _ProfileActionButton(
+                      icon: AppConstants.edit,
+                      title: 'Profilni tahrirlash',
+                      onTap: profile == null
+                          ? null
+                          : () => _openProfileEdit(context, profile),
+                    ),
+                    const SizedBox(height: 10),
+                    const _ProfileActionButton(
+                      icon: AppConstants.notification,
+                      title: 'Bildirishnomalar',
+                    ),
+                    const SizedBox(height: 10),
+                    const _ProfileActionButton(
+                      icon: AppConstants.support,
+                      title: 'Yordam markazi',
+                    ),
+                    const SizedBox(height: 10),
+                    const _ProfileActionButton(
+                      icon: AppConstants.info,
+                      title: 'Biz haqimizda',
+                    ),
+                    const SizedBox(height: 10),
+                    _ProfileActionButton(
+                      icon: AppConstants.logout,
+                      title: 'Chiqish',
+                      isLogout: true,
+                      onTap: () => _showLogoutSheet(context),
+                    ),
+                    const SizedBox(height: 115),
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(height: 35),
-            _ProfileActionButton(
-              icon: AppConstants.edit,
-              title: "Profilni tahrirlash",
-              onTap: () => _openProfileEdit(context),
-            ),
-            const SizedBox(height: 10),
-            const _ProfileActionButton(
-              icon: AppConstants.notification,
-              title: "Bildirishnomalar",
-            ),
-            const SizedBox(height: 10),
-            const _ProfileActionButton(
-              icon: AppConstants.support,
-              title: "Yordam markazi",
-            ),
-            const SizedBox(height: 10),
-            const _ProfileActionButton(
-              icon: AppConstants.info,
-              title: "Biz haqimizda",
-            ),
-            const SizedBox(height: 10),
-            _ProfileActionButton(
-              icon: AppConstants.logout,
-              title: "Chiqish",
-              isLogout: true,
-              onTap: () => _showLogoutSheet(context),
-            ),
-            const SizedBox(height: 115),
-          ],
+            );
+          },
         ),
       ),
+    );
+  }
+
+  String _displayValue(String? value) {
+    final text = value?.trim() ?? '';
+    return text.isEmpty ? '-' : text;
+  }
+
+  String _formatAuthMethods(List<String> methods) {
+    if (methods.isEmpty) return '-';
+
+    final labels = methods.map((method) {
+      switch (method.toLowerCase()) {
+        case 'phone':
+          return 'Telefon + OTP';
+        case 'email':
+          return 'Email';
+        default:
+          final normalized = method.replaceAll('_', ' ').trim();
+          if (normalized.isEmpty) return method;
+          return normalized[0].toUpperCase() + normalized.substring(1);
+      }
+    }).toSet();
+
+    return labels.join(', ');
+  }
+
+  String _formatCreatedAt(DateTime? value) {
+    if (value == null) return '-';
+    final local = value.toLocal();
+    return '${local.day} ${_monthName(local.month)} ${local.year}';
+  }
+
+  String _formatLastLogin(DateTime? value) {
+    if (value == null) return '-';
+
+    final local = value.toLocal();
+    final time =
+        '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+
+    if (_isSameDay(local, DateTime.now())) {
+      return 'Bugun $time';
+    }
+
+    return '${local.day} ${_monthName(local.month)}, $time';
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  String _monthName(int month) {
+    const months = [
+      'Yanvar',
+      'Fevral',
+      'Mart',
+      'Aprel',
+      'May',
+      'Iyun',
+      'Iyul',
+      'Avgust',
+      'Sentabr',
+      'Oktabr',
+      'Noyabr',
+      'Dekabr',
+    ];
+
+    return months[month - 1];
+  }
+
+  String? _resolveAvatarUrl(String? value) {
+    final avatar = value?.trim() ?? '';
+    if (avatar.isEmpty) return null;
+
+    final uri = Uri.tryParse(avatar);
+    if (uri != null && uri.hasScheme) {
+      return avatar;
+    }
+
+    return '${AppConstants.baseUrl}$avatar';
+  }
+}
+
+class _ProfileShimmerOverlay extends StatefulWidget {
+  final Widget child;
+  final bool enabled;
+  final double borderRadius;
+
+  const _ProfileShimmerOverlay({
+    required this.child,
+    required this.enabled,
+    required this.borderRadius,
+  });
+
+  @override
+  State<_ProfileShimmerOverlay> createState() => _ProfileShimmerOverlayState();
+}
+
+class _ProfileShimmerOverlayState extends State<_ProfileShimmerOverlay>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.enabled) {
+      return widget.child;
+    }
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final shimmerOffset = (_controller.value * 2.4) - 1.2;
+
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(widget.borderRadius),
+          child: ShaderMask(
+            blendMode: BlendMode.srcATop,
+            shaderCallback: (bounds) {
+              return LinearGradient(
+                begin: Alignment(shimmerOffset - 1, 0),
+                end: Alignment(shimmerOffset + 1, 0),
+                colors: [
+                  Colors.white.withValues(alpha: 0.88),
+                  Colors.white.withValues(alpha: 0.40),
+                  Colors.white.withValues(alpha: 0.98),
+                  Colors.white.withValues(alpha: 0.40),
+                  Colors.white.withValues(alpha: 0.88),
+                ],
+                stops: const [0.0, 0.35, 0.5, 0.65, 1.0],
+              ).createShader(bounds);
+            },
+            child: child,
+          ),
+        );
+      },
+      child: widget.child,
     );
   }
 }

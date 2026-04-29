@@ -34,6 +34,7 @@ class _MainShellPageState extends State<MainShellPage> {
         phoneNumber: widget.phoneNumber,
         countryName: widget.countryName,
         flagEmoji: widget.flagEmoji,
+        isActive: _currentIndex == 1,
       ),
     ];
 
@@ -56,13 +57,13 @@ class _MainShellPageState extends State<MainShellPage> {
                 borderRadius: BorderRadius.circular(65),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 6,
                     spreadRadius: 0.3,
                     offset: const Offset(0, 1),
                   ),
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: Colors.black.withValues(alpha: 0.02),
                     blurRadius: 10,
                     spreadRadius: 0,
                     offset: const Offset(0, 4),
