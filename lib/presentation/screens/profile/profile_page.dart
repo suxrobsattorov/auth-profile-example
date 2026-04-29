@@ -257,10 +257,13 @@ class _ProfilePageState extends State<ProfilePage> {
           builder: (context, state) {
             final profile = state.profile;
             final phoneNumber = profile?.phone ?? widget.phoneNumber;
-            final formattedPhoneNumber =
-                AppPhoneNumberFormatter.tryFormatSupportedInternational(
-              phoneNumber,
-            );
+            final trimmedPhoneNumber = phoneNumber.trim();
+            final hasPhoneNumber = trimmedPhoneNumber.isNotEmpty;
+            final formattedPhoneNumber = hasPhoneNumber
+                ? AppPhoneNumberFormatter.tryFormatSupportedInternational(
+                    trimmedPhoneNumber,
+                  )
+                : '';
             final isHeaderLoading = state.isLoading;
             final avatarUrl = _resolveAvatarUrl(profile?.avatar);
             final country = _displayValue(profile?.country);
@@ -268,6 +271,9 @@ class _ProfilePageState extends State<ProfilePage> {
             final authMethod = _formatAuthMethods(profile?.authMethods);
             final createdAt = _formatCreatedAt(profile?.createdAt);
             final lastLogin = _formatLastLogin(profile?.lastLogin);
+            final profileName = profile?.resolvedFullName.isNotEmpty == true
+                ? profile!.resolvedFullName
+                : 'Shaxsiy profil';
 
             return SafeArea(
               child: SingleChildScrollView(
@@ -333,49 +339,49 @@ class _ProfilePageState extends State<ProfilePage> {
                                     _ProfileShimmerOverlay(
                                       enabled: isHeaderLoading,
                                       borderRadius: 14,
-                                      child: Text(
-                                        profile?.resolvedFullName.isNotEmpty ==
-                                                true
-                                            ? profile!.resolvedFullName
-                                            : 'Shaxsiy profil',
-                                        style: AppTextStyles.headlineSmall,
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    _ProfileShimmerOverlay(
-                                      enabled: isHeaderLoading,
-                                      borderRadius: 10,
-                                      child: Text(
-                                        formattedPhoneNumber,
-                                        style:
-                                            AppTextStyles.bodyMedium.copyWith(
-                                          color: Colors.grey.shade600,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    _ProfileShimmerOverlay(
-                                      enabled: isHeaderLoading,
-                                      borderRadius: 99,
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 20,
-                                          vertical: 8,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.primaryLight,
-                                          borderRadius:
-                                              BorderRadius.circular(99),
-                                        ),
-                                        child: Text(
-                                          'Faol foydalanuvchi',
-                                          style: AppTextStyles.labelMedium
-                                              .copyWith(
-                                            color: AppColors.primary,
-                                            fontSize: 12,
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            profileName,
+                                            style: AppTextStyles.headlineSmall,
+                                            textAlign: TextAlign.center,
                                           ),
-                                        ),
+                                          const SizedBox(height: 8),
+                                          if (hasPhoneNumber) ...[
+                                            _ProfileShimmerOverlay(
+                                              enabled: isHeaderLoading,
+                                              borderRadius: 10,
+                                              child: Text(
+                                                formattedPhoneNumber,
+                                                style:
+                                                AppTextStyles.bodyMedium.copyWith(
+                                                  color: Colors.grey.shade600,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                          ],
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 14,
+                                              vertical: 7,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.primaryLight,
+                                              borderRadius:
+                                                  BorderRadius.circular(99),
+                                            ),
+                                            child: Text(
+                                              'Faol foydalanuvchi',
+                                              style: AppTextStyles.labelMedium
+                                                  .copyWith(
+                                                color: AppColors.primary,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                     const SizedBox(height: 16),
@@ -383,11 +389,20 @@ class _ProfilePageState extends State<ProfilePage> {
                                       title: 'Hudud',
                                       value: country,
                                     ),
-                                    const SizedBox(height: 10),
-                                    ProfileInfoRow(
-                                      title: 'Email',
-                                      value: email,
-                                    ),
+                                    if (hasPhoneNumber) ...[
+                                      const SizedBox(height: 10),
+                                      ProfileInfoRow(
+                                        title: 'Telefon raqam',
+                                        value: formattedPhoneNumber,
+                                      ),
+                                    ],
+                                    if (!isHeaderLoading) ...[
+                                      const SizedBox(height: 10),
+                                      ProfileInfoRow(
+                                        title: 'Email',
+                                        value: email,
+                                      ),
+                                    ],
                                     const SizedBox(height: 10),
                                     ProfileInfoRow(
                                       title: 'Kirish usuli',

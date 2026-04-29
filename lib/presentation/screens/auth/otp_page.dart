@@ -162,7 +162,6 @@ class _OtpPageState extends State<OtpPage> {
       },
       builder: (context, state) {
         final isLoading = state is AuthLoading;
-        final progress = _secondsLeft / _totalSeconds;
 
         return Scaffold(
           body: Container(
@@ -222,12 +221,6 @@ class _OtpPageState extends State<OtpPage> {
                             ),
                           ),
                           const SizedBox(height: 24),
-                          _OtpTimerIndicator(
-                            progress: progress,
-                            formattedTime: _formattedTime,
-                            isExpired: _canResend,
-                          ),
-                          const SizedBox(height: 24),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: List.generate(
@@ -258,25 +251,37 @@ class _OtpPageState extends State<OtpPage> {
                             isLoading: isLoading,
                             onPressed: isLoading ? null : _verify,
                           ),
-                          const SizedBox(height: 8),
-                          TextButton(
-                            onPressed: (_canResend && !isLoading)
-                                ? _onResendPressed
-                                : null,
-                            child: Text(
-                              _canResend
-                                  ? 'Kodni qayta yuborish'
-                                  : 'Qayta yuborish uchun kuting...',
-                              style: TextStyle(
-                                color: _canResend
-                                    ? AppColors.primaryDark
-                                    : AppColors.textHint,
-                                fontSize: 13,
-                                fontWeight: _canResend
-                                    ? FontWeight.w600
-                                    : FontWeight.w400,
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              TextButton(
+                                onPressed: (_canResend && !isLoading)
+                                    ? _onResendPressed
+                                    : null,
+                                child: Text(
+                                  _canResend
+                                      ? 'Kodni qayta yuborish'
+                                      : 'Qayta yuborish',
+                                  style: TextStyle(
+                                    color: _canResend
+                                        ? AppColors.primaryDark
+                                        : AppColors.textHint,
+                                    fontSize: 13,
+                                    fontWeight: _canResend
+                                        ? FontWeight.w600
+                                        : FontWeight.w400,
+                                  ),
+                                ),
                               ),
-                            ),
+                              if (!_canResend) ...[
+                                const SizedBox(width: 6),
+                                _OtpTimerLabel(
+                                  formattedTime: _formattedTime,
+                                ),
+                              ],
+                            ],
                           ),
                         ],
                       ),
@@ -292,49 +297,31 @@ class _OtpPageState extends State<OtpPage> {
   }
 }
 
-class _OtpTimerIndicator extends StatelessWidget {
-  final double progress;
+class _OtpTimerLabel extends StatelessWidget {
   final String formattedTime;
-  final bool isExpired;
 
-  const _OtpTimerIndicator({
-    required this.progress,
+  const _OtpTimerLabel({
     required this.formattedTime,
-    required this.isExpired,
   });
 
   @override
   Widget build(BuildContext context) {
-    final activeColor =
-        isExpired ? AppColors.textHint : AppColors.primaryDark;
-
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          isExpired ? Icons.timer_off_outlined : Icons.timer_outlined,
+        const Icon(
+          Icons.timer_outlined,
           size: 15,
-          color: activeColor,
+          color: AppColors.primary,
         ),
         const SizedBox(width: 6),
         Text(
           formattedTime,
-          style: TextStyle(
-            color: activeColor,
+          style: const TextStyle(
+            color: AppColors.primary,
             fontSize: 13,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.5,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 4,
-              backgroundColor: AppColors.textHint.withAlpha(50),
-              valueColor: AlwaysStoppedAnimation<Color>(activeColor),
-            ),
           ),
         ),
       ],
