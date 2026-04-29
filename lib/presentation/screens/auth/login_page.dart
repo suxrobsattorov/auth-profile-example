@@ -175,7 +175,7 @@ class _LoginPageState extends State<LoginPage> {
                                       label: 'Apple orqali kirish',
                                       imagePath: AppConstants.appleAsset,
                                       onTap: () => _showSocialMessage(context),
-                                      isLoading: isGoogleLoading,
+                                      isLoading: false,
                                     ),
                                   ],
                                 ),

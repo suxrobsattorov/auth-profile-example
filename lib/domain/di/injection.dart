@@ -34,7 +34,7 @@ void _registerNetwork() {
 }
 
 void _registerServices() {
-  sl.registerLazySingleton<IGoogleAuthService>(() => GoogleAuthServiceImpl());
+  sl.registerLazySingleton<GoogleAuthService>(() => GoogleAuthServiceImpl());
 }
 
 void _registerStorage() {
@@ -54,7 +54,7 @@ void _registerBlocs() {
   sl.registerFactory<AuthBloc>(
     () => AuthBloc(
       repository: sl<IAuthRepository>(),
-      googleAuthService: sl<IGoogleAuthService>(),
+      googleAuthService: sl<GoogleAuthService>(),
       profileRepository: sl<IProfileRepository>(),
       storage: sl<TokenStorage>(),
     ),

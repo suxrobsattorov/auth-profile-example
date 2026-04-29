@@ -1,4 +1,4 @@
-package com.example.auth_profile_example
+package com.suxrob.auth_profile_example
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -7,15 +7,13 @@ class GoogleAuthConfig {
         '913143229825-6t2ku4uup4ur3iv7u5lfsamdjtva27qe.apps.googleusercontent.com',
   );
 
-  static const String androidClientId = String.fromEnvironment(
-    'GOOGLE_CLIENT_ID_ANDROID',
-    defaultValue:
-        '913143229825-4v21fk5cgponiurn4g99cn3t81ockli8.apps.googleusercontent.com',
-  );
-
+  // Web OAuth 2.0 Client ID — Google Cloud Console > APIs & Services > Credentials
+  // !! Android uchun MAJBURIY !! google_sign_in v7+ idToken qaytarishi uchun kerak.
+  // Yoki android/app/google-services.json ichida client_type:3 bo'lishi kifoya.
   static const String _serverClientId = String.fromEnvironment(
     'GOOGLE_SERVER_CLIENT_ID',
     defaultValue: '',
+    // defaultValue: 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com',
   );
 
   static const List<String> serverScopes = <String>[
@@ -24,12 +22,13 @@ class GoogleAuthConfig {
     'profile',
   ];
 
+  // Android clientId ni google_sign_in v7 butunlay e'tiborsiz qoldiradi.
+  // Android faqat serverClientId yoki google-services.json ni ishlatadi.
   static String? get clientId {
     if (kIsWeb) return null;
 
     return switch (defaultTargetPlatform) {
-      TargetPlatform.iOS => iosClientId,
-      TargetPlatform.macOS => iosClientId,
+      TargetPlatform.iOS || TargetPlatform.macOS => iosClientId,
       _ => null,
     };
   }

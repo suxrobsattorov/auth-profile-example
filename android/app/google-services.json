@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "631596548542",
+    "project_id": "auth-profile-acdcc",
+    "storage_bucket": "auth-profile-acdcc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:631596548542:android:ed3d6fc07229317aedf9ef",
+        "android_client_info": {
+          "package_name": "com.suxrob.auth_profile_example"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "631596548542-iv14eedrtejcr4nvj7resveghe1rlm3m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAhA_JTFj5WLxpk1mYmGdXgQghhSZF8fUU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "631596548542-iv14eedrtejcr4nvj7resveghe1rlm3m.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

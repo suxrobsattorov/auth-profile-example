@@ -6,7 +6,7 @@ import 'package:auth_profile_example/core/config/google_auth_config.dart';
 import 'package:auth_profile_example/domain/interface/google_auth.dart';
 import 'package:auth_profile_example/domain/model/google_auth_credential.dart';
 
-class GoogleAuthServiceImpl implements IGoogleAuthService {
+class GoogleAuthServiceImpl implements GoogleAuthService {
   final GoogleSignIn _googleSignIn;
   Future<void>? _initializeFuture;
 
@@ -25,19 +25,27 @@ class GoogleAuthServiceImpl implements IGoogleAuthService {
 
     try {
       final user = await _googleSignIn.authenticate();
-      final authentication = user.authentication;
+      final idToken = user.authentication.idToken;
+
+      if (idToken == null || idToken.isEmpty) {
+        throw const GoogleAuthException(
+          'Google ID token olinmadi.\n'
+          'Yechim A: android/app/google-services.json ga web OAuth '
+          'client (client_type:3) qo\'shing.\n'
+          'Yechim B: GoogleAuthConfig._serverClientId ga '
+          'Web Client ID ni kiriting.',
+        );
+      }
 
       String? serverAuthCode;
       if (GoogleAuthConfig.hasServerClientId) {
-        final serverAuthorization = await user.authorizationClient
-            .authorizeServer(GoogleAuthConfig.serverScopes);
-        serverAuthCode = serverAuthorization?.serverAuthCode;
-      }
-
-      if (authentication.idToken == null || authentication.idToken!.isEmpty) {
-        throw const GoogleAuthException(
-          'Google ID token olinmadi. Android uchun web/server client ID kerak bo\'lishi mumkin.',
-        );
+        try {
+          final serverAuth = await user.authorizationClient
+              .authorizeServer(GoogleAuthConfig.serverScopes);
+          serverAuthCode = serverAuth?.serverAuthCode;
+        } catch (e) {
+          debugPrint('[GoogleAuth] authorizeServer skipped: $e');
+        }
       }
 
       return GoogleAuthCredential(
@@ -45,12 +53,14 @@ class GoogleAuthServiceImpl implements IGoogleAuthService {
         email: user.email,
         displayName: user.displayName,
         photoUrl: user.photoUrl,
-        idToken: authentication.idToken,
+        idToken: idToken,
         serverAuthCode: serverAuthCode,
       );
     } on GoogleSignInException catch (e) {
+      debugPrint('[GoogleAuth] GoogleSignInException: code=${e.code} description=${e.description} details=${e.details}');
       throw GoogleAuthException(_mapGoogleError(e));
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('[GoogleAuth] Unknown error: $e\n$st');
       if (e is GoogleAuthException) rethrow;
       throw const GoogleAuthException(
         'Google orqali kirishda noma\'lum xatolik yuz berdi.',
@@ -68,7 +78,6 @@ class GoogleAuthServiceImpl implements IGoogleAuthService {
       await _initializeFuture;
       await _googleSignIn.signOut();
     } on GoogleSignInException {
-      // Local Google session cleanup should not block normal logout.
     } on PlatformException catch (e, st) {
       debugPrint('[GoogleAuth] signOut platform error ignored: $e\n$st');
     } catch (e, st) {

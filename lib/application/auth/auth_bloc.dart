@@ -21,7 +21,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   static const _googleFallbackFlag = '🌐';
 
   final IAuthRepository _repository;
-  final IGoogleAuthService _googleAuthService;
+  final GoogleAuthService _googleAuthService;
   final IProfileRepository _profileRepository;
   final TokenStorage _storage;
   Timer? _refreshTimer;
@@ -29,7 +29,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   AuthBloc({
     required IAuthRepository repository,
-    required IGoogleAuthService googleAuthService,
+    required GoogleAuthService googleAuthService,
     required IProfileRepository profileRepository,
     required TokenStorage storage,
   })  : _repository = repository,
