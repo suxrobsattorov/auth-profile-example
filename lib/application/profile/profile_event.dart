@@ -22,6 +22,28 @@ class ProfileUpdateSubmitted extends ProfileEvent {
   List<Object?> get props => [request];
 }
 
+class ProfileEmailCodeRequested extends ProfileEvent {
+  final String email;
+
+  const ProfileEmailCodeRequested(this.email);
+
+  @override
+  List<Object?> get props => [email];
+}
+
+class ProfileEmailVerifySubmitted extends ProfileEvent {
+  final String email;
+  final String code;
+
+  const ProfileEmailVerifySubmitted({
+    required this.email,
+    required this.code,
+  });
+
+  @override
+  List<Object?> get props => [email, code];
+}
+
 class ProfileFeedbackCleared extends ProfileEvent {
   const ProfileFeedbackCleared();
 }

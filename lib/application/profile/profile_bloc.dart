@@ -15,6 +15,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         super(const ProfileState()) {
     on<ProfileRequested>(_onRequested);
     on<ProfileUpdateSubmitted>(_onUpdateSubmitted);
+    on<ProfileEmailCodeRequested>(_onEmailCodeRequested);
+    on<ProfileEmailVerifySubmitted>(_onEmailVerifySubmitted);
     on<ProfileFeedbackCleared>(_onFeedbackCleared);
   }
 
@@ -38,6 +40,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         isLoading: false,
         clearErrorMessage: true,
         clearSuccessMessage: true,
+        clearSuccessType: true,
       ));
     } on DioException catch (e) {
       final message = _extractDioError(e);
@@ -48,6 +51,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         isLoading: false,
         errorMessage: message,
         clearSuccessMessage: true,
+        clearSuccessType: true,
       ));
     } catch (e, st) {
       debugPrint('[ProfileBloc] load unknown error: $e\n$st');
@@ -55,6 +59,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         isLoading: false,
         errorMessage: 'Profilni yuklab bo\'lmadi. Qayta urinib ko\'ring.',
         clearSuccessMessage: true,
+        clearSuccessType: true,
       ));
     }
   }
@@ -70,6 +75,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       isSaving: true,
       clearErrorMessage: true,
       clearSuccessMessage: true,
+      clearSuccessType: true,
     ));
 
     try {
@@ -78,6 +84,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         profile: updatedProfile,
         isSaving: false,
         successMessage: 'Profil muvaffaqiyatli saqlandi.',
+        successType: ProfileSuccessType.profileUpdated,
       ));
     } on DioException catch (e) {
       final message = _extractDioError(e);
@@ -88,6 +95,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         isSaving: false,
         errorMessage: message,
         clearSuccessMessage: true,
+        clearSuccessType: true,
       ));
     } catch (e, st) {
       debugPrint('[ProfileBloc] update unknown error: $e\n$st');
@@ -95,6 +103,104 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         isSaving: false,
         errorMessage: 'Profilni saqlab bo\'lmadi. Qayta urinib ko\'ring.',
         clearSuccessMessage: true,
+        clearSuccessType: true,
+      ));
+    }
+  }
+
+  Future<void> _onEmailCodeRequested(
+    ProfileEmailCodeRequested event,
+    Emitter<ProfileState> emit,
+  ) async {
+    if (state.isSendingEmailCode) return;
+
+    final email = event.email.trim();
+
+    debugPrint('[ProfileBloc] ProfileEmailCodeRequested -> $email');
+    emit(state.copyWith(
+      isSendingEmailCode: true,
+      clearErrorMessage: true,
+      clearSuccessMessage: true,
+      clearSuccessType: true,
+    ));
+
+    try {
+      await _repository.requestEmailChangeCode(email);
+      emit(state.copyWith(
+        isSendingEmailCode: false,
+        pendingEmail: email,
+        successMessage: 'Tasdiqlash kodi yuborildi.',
+        successType: ProfileSuccessType.emailCodeSent,
+      ));
+    } on DioException catch (e) {
+      final message = _extractDioError(e);
+      debugPrint(
+        '[ProfileBloc] email request DioException: $message | status: ${e.response?.statusCode}',
+      );
+      emit(state.copyWith(
+        isSendingEmailCode: false,
+        errorMessage: message,
+        clearSuccessMessage: true,
+        clearSuccessType: true,
+      ));
+    } catch (e, st) {
+      debugPrint('[ProfileBloc] email request unknown error: $e\n$st');
+      emit(state.copyWith(
+        isSendingEmailCode: false,
+        errorMessage: 'Kod yuborib bo\'lmadi. Qayta urinib ko\'ring.',
+        clearSuccessMessage: true,
+        clearSuccessType: true,
+      ));
+    }
+  }
+
+  Future<void> _onEmailVerifySubmitted(
+    ProfileEmailVerifySubmitted event,
+    Emitter<ProfileState> emit,
+  ) async {
+    if (state.isVerifyingEmailCode) return;
+
+    final email = event.email.trim();
+    final code = event.code.trim();
+
+    debugPrint('[ProfileBloc] ProfileEmailVerifySubmitted -> $email');
+    emit(state.copyWith(
+      isVerifyingEmailCode: true,
+      clearErrorMessage: true,
+      clearSuccessMessage: true,
+      clearSuccessType: true,
+    ));
+
+    try {
+      final updatedProfile = await _repository.verifyEmailChange(
+        email: email,
+        code: code,
+      );
+      emit(state.copyWith(
+        profile: updatedProfile,
+        isVerifyingEmailCode: false,
+        clearPendingEmail: true,
+        successMessage: 'Email muvaffaqiyatli yangilandi.',
+        successType: ProfileSuccessType.emailUpdated,
+      ));
+    } on DioException catch (e) {
+      final message = _extractDioError(e);
+      debugPrint(
+        '[ProfileBloc] email verify DioException: $message | status: ${e.response?.statusCode}',
+      );
+      emit(state.copyWith(
+        isVerifyingEmailCode: false,
+        errorMessage: message,
+        clearSuccessMessage: true,
+        clearSuccessType: true,
+      ));
+    } catch (e, st) {
+      debugPrint('[ProfileBloc] email verify unknown error: $e\n$st');
+      emit(state.copyWith(
+        isVerifyingEmailCode: false,
+        errorMessage: 'Emailni tasdiqlab bo\'lmadi. Qayta urinib ko\'ring.',
+        clearSuccessMessage: true,
+        clearSuccessType: true,
       ));
     }
   }
@@ -106,6 +212,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     emit(state.copyWith(
       clearErrorMessage: true,
       clearSuccessMessage: true,
+      clearSuccessType: true,
     ));
   }
 

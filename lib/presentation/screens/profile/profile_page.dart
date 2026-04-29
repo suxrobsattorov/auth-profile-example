@@ -268,7 +268,6 @@ class _ProfilePageState extends State<ProfilePage> {
             final avatarUrl = _resolveAvatarUrl(profile?.avatar);
             final country = _displayValue(profile?.country);
             final trimmedEmail = profile?.email?.trim() ?? '';
-            final hasEmail = trimmedEmail.isNotEmpty;
             final email = _displayValue(profile?.email);
             final authMethod = _formatAuthMethods(profile?.authMethods);
             final createdAt = _formatCreatedAt(profile?.createdAt);

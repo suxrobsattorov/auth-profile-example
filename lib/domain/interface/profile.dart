@@ -5,4 +5,11 @@ abstract class IProfileRepository {
   Future<UserProfile> getProfile();
 
   Future<UserProfile> updateProfile(ProfileUpdateRequest request);
+
+  Future<void> requestEmailChangeCode(String email);
+
+  Future<UserProfile> verifyEmailChange({
+    required String email,
+    required String code,
+  });
 }

@@ -5,16 +5,12 @@ import 'package:equatable/equatable.dart';
 class ProfileUpdateRequest extends Equatable {
   final String firstName;
   final String lastName;
-  final String email;
-  final bool includeEmail;
   final String country;
   final File? avatarFile;
 
   const ProfileUpdateRequest({
     required this.firstName,
     required this.lastName,
-    required this.email,
-    required this.includeEmail,
     required this.country,
     this.avatarFile,
   });
@@ -23,8 +19,6 @@ class ProfileUpdateRequest extends Equatable {
   List<Object?> get props => [
         firstName,
         lastName,
-        email,
-        includeEmail,
         country,
         avatarFile?.path,
       ];

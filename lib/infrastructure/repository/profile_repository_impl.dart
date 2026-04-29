@@ -27,7 +27,6 @@ class ProfileRepositoryImpl implements IProfileRepository {
       'first_name': request.firstName.trim(),
       'last_name': request.lastName.trim(),
       'country': request.country.trim(),
-      if (request.includeEmail) 'email': request.email.trim(),
     });
 
     if (request.avatarFile != null) {
@@ -51,6 +50,30 @@ class ProfileRepositoryImpl implements IProfileRepository {
           data: formData,
           options: Options(contentType: 'multipart/form-data'),
         );
+
+    return UserProfile.fromJson(_parseJson(response.data));
+  }
+
+  @override
+  Future<void> requestEmailChangeCode(String email) async {
+    await _dioClient.client(requireAuth: true).post(
+      '/api/users/profile/email/request/',
+      data: {'email': email.trim()},
+    );
+  }
+
+  @override
+  Future<UserProfile> verifyEmailChange({
+    required String email,
+    required String code,
+  }) async {
+    final response = await _dioClient.client(requireAuth: true).post(
+      '/api/users/profile/email/verify/',
+      data: {
+        'email': email.trim(),
+        'code': code.trim(),
+      },
+    );
 
     return UserProfile.fromJson(_parseJson(response.data));
   }

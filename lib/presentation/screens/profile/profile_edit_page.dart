@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -33,28 +34,37 @@ class ProfileEditPage extends StatefulWidget {
 }
 
 class _ProfileEditPageState extends State<ProfileEditPage> {
+  static final RegExp _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
   late final TextEditingController _firstNameController;
   late final TextEditingController _lastNameController;
-  late final TextEditingController _emailController;
   late final TextEditingController _locationController;
+  late final TextEditingController _newEmailController;
+  late final TextEditingController _emailCodeController;
+  late final FocusNode _emailCodeFocusNode;
 
   File? _pickedImage;
+  String? _pendingEmail;
 
   @override
   void initState() {
     super.initState();
     _firstNameController = TextEditingController(text: widget.initialFirstName);
     _lastNameController = TextEditingController(text: widget.initialLastName);
-    _emailController = TextEditingController(text: widget.initialEmail);
     _locationController = TextEditingController(text: widget.initialLocation);
+    _newEmailController = TextEditingController(text: widget.initialEmail);
+    _emailCodeController = TextEditingController();
+    _emailCodeFocusNode = FocusNode();
   }
 
   @override
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
-    _emailController.dispose();
     _locationController.dispose();
+    _newEmailController.dispose();
+    _emailCodeController.dispose();
+    _emailCodeFocusNode.dispose();
     super.dispose();
   }
 
@@ -158,9 +168,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             ProfileUpdateRequest(
               firstName: _firstNameController.text,
               lastName: _lastNameController.text,
-              email: _emailController.text,
-              includeEmail: _emailController.text.trim().isNotEmpty ||
-                  widget.initialEmail.trim().isNotEmpty,
               country: _locationController.text,
               avatarFile: _pickedImage,
             ),
@@ -168,33 +175,93 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
         );
   }
 
+  void _requestEmailCode() {
+    FocusScope.of(context).unfocus();
+
+    final newEmail = _newEmailController.text.trim();
+
+    if (newEmail.isEmpty) {
+      _showSnackBar('Emailni kiriting.');
+      return;
+    }
+
+    if (!_emailPattern.hasMatch(newEmail)) {
+      _showSnackBar('Email formatini to\'g\'ri kiriting.');
+      return;
+    }
+
+    context.read<ProfileBloc>().add(ProfileEmailCodeRequested(newEmail));
+  }
+
+  void _verifyEmailChange(String pendingEmail) {
+    FocusScope.of(context).unfocus();
+
+    final code = _emailCodeController.text.trim();
+
+    if (code.length != 6) {
+      _showSnackBar('6 xonali tasdiqlash kodini kiriting.');
+      return;
+    }
+
+    context.read<ProfileBloc>().add(
+          ProfileEmailVerifySubmitted(
+            email: pendingEmail,
+            code: code,
+          ),
+        );
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isSaving = context.select(
-      (ProfileBloc bloc) => bloc.state.isSaving,
-    );
+    final state = context.watch<ProfileBloc>().state;
+    final isSaving = state.isSaving;
+    final isSendingEmailCode = state.isSendingEmailCode;
+    final isVerifyingEmailCode = state.isVerifyingEmailCode;
+    final pendingEmail = _pendingEmail?.trim() ?? '';
+    final hasPendingEmail = pendingEmail.isNotEmpty;
 
     return BlocListener<ProfileBloc, ProfileState>(
       listenWhen: (previous, current) =>
           previous.errorMessage != current.errorMessage ||
-          previous.successMessage != current.successMessage,
+          previous.successMessage != current.successMessage ||
+          previous.successType != current.successType,
       listener: (context, state) {
         if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
 
         if (state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.errorMessage!)),
-          );
+          _showSnackBar(state.errorMessage!);
           context.read<ProfileBloc>().add(const ProfileFeedbackCleared());
           return;
         }
 
-        if (state.successMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.successMessage!)),
-          );
+        if (state.successMessage != null && state.successType != null) {
+          if (state.successType == ProfileSuccessType.emailCodeSent) {
+            setState(() {
+              _pendingEmail = _newEmailController.text.trim();
+            });
+            _emailCodeController.clear();
+            _emailCodeFocusNode.requestFocus();
+          } else if (state.successType == ProfileSuccessType.emailUpdated) {
+            setState(() {
+              _newEmailController.text =
+                  state.profile?.email?.trim() ?? pendingEmail;
+              _emailCodeController.clear();
+              _pendingEmail = null;
+            });
+          }
+
+          _showSnackBar(state.successMessage!);
           context.read<ProfileBloc>().add(const ProfileFeedbackCleared());
-          Navigator.of(context).pop();
+
+          if (state.successType == ProfileSuccessType.profileUpdated) {
+            Navigator.of(context).pop();
+          }
         }
       },
       child: Scaffold(
@@ -236,6 +303,16 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                   const SizedBox(height: 28),
                   _SectionCard(
                     children: [
+                      const Text(
+                        'Asosiy ma\'lumotlar',
+                        style: AppTextStyles.titleLarge,
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Profil rasmi, ism va hudud shu bo\'lim orqali yangilanadi.',
+                        style: AppTextStyles.bodyMedium,
+                      ),
+                      const SizedBox(height: 18),
                       _EditField(
                         label: 'Ism',
                         controller: _firstNameController,
@@ -253,13 +330,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                       ),
                       const SizedBox(height: 10),
                       _EditField(
-                        label: 'Email',
-                        controller: _emailController,
-                        hintText: 'example@mail.com',
-                        keyboardType: TextInputType.emailAddress,
-                      ),
-                      const SizedBox(height: 10),
-                      _EditField(
                         label: 'Hudud',
                         controller: _locationController,
                         hintText: 'Hududingizni kiriting',
@@ -267,7 +337,100 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 35),
+                  const SizedBox(height: 20),
+                  _SectionCard(
+                    padding: const EdgeInsets.all(14),
+                    borderRadius: 20,
+                    children: [
+                      const Text(
+                        'Emailni o\'zgartirish',
+                        style: AppTextStyles.titleLarge,
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Email alohida tasdiqlanadi. Kod kiritgan email manzilingizga yuboriladi.',
+                        style: AppTextStyles.bodyMedium,
+                      ),
+                      const SizedBox(height: 14),
+                      _EditField(
+                        label: 'Email',
+                        controller: _newEmailController,
+                        hintText: 'example@mail.com',
+                        keyboardType: TextInputType.emailAddress,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 14,
+                        ),
+                      ),
+                      if (!hasPendingEmail) ...[
+                        const SizedBox(height: 12),
+                        AppButton(
+                          label: 'Tasdiqlash kodini yuborish',
+                          onPressed: isSendingEmailCode || isVerifyingEmailCode
+                              ? null
+                              : _requestEmailCode,
+                          isLoading: isSendingEmailCode,
+                          height: 52,
+                        ),
+                      ],
+                      if (hasPendingEmail) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceMuted,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: AppColors.divider),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Emailni tasdiqlash',
+                                style: AppTextStyles.titleMedium.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Kod $pendingEmail manziliga yuborildi.',
+                                style: AppTextStyles.bodyMedium,
+                              ),
+                              const SizedBox(height: 10),
+                              _EditField(
+                                label: 'Tasdiqlash kodi',
+                                controller: _emailCodeController,
+                                hintText: '123456',
+                                keyboardType: TextInputType.number,
+                                focusNode: _emailCodeFocusNode,
+                                maxLength: 6,
+                                showLabel: false,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 14,
+                                ),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(6),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              AppButton(
+                                label: 'Emailni tasdiqlash',
+                                onPressed: isVerifyingEmailCode
+                                    ? null
+                                    : () => _verifyEmailChange(pendingEmail),
+                                isLoading: isVerifyingEmailCode,
+                                height: 50,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 28),
                   AppButton(
                     label: 'Saqlash',
                     onPressed: isSaving ? null : _save,
@@ -359,17 +522,23 @@ class _AvatarSection extends StatelessWidget {
 
 class _SectionCard extends StatelessWidget {
   final List<Widget> children;
+  final EdgeInsetsGeometry padding;
+  final double borderRadius;
 
-  const _SectionCard({required this.children});
+  const _SectionCard({
+    required this.children,
+    this.padding = const EdgeInsets.all(16),
+    this.borderRadius = 24,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: padding,
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: const [
           BoxShadow(
             color: AppColors.shadow,
@@ -448,6 +617,11 @@ class _EditField extends StatelessWidget {
   final String hintText;
   final TextInputType keyboardType;
   final TextCapitalization textCapitalization;
+  final FocusNode? focusNode;
+  final int? maxLength;
+  final List<TextInputFormatter>? inputFormatters;
+  final EdgeInsetsGeometry? contentPadding;
+  final bool showLabel;
 
   const _EditField({
     required this.label,
@@ -455,6 +629,11 @@ class _EditField extends StatelessWidget {
     required this.hintText,
     this.keyboardType = TextInputType.text,
     this.textCapitalization = TextCapitalization.none,
+    this.focusNode,
+    this.maxLength,
+    this.inputFormatters,
+    this.contentPadding,
+    this.showLabel = true,
   });
 
   @override
@@ -462,26 +641,33 @@ class _EditField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: AppTextStyles.bodySmall.copyWith(
-            fontWeight: FontWeight.w500,
-            color: AppColors.textSecondary,
+        if (showLabel) ...[
+          Text(
+            label,
+            style: AppTextStyles.bodySmall.copyWith(
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
+            ),
           ),
-        ),
-        const SizedBox(height: 5),
+          const SizedBox(height: 5),
+        ],
         TextField(
           controller: controller,
+          focusNode: focusNode,
           keyboardType: keyboardType,
           textCapitalization: textCapitalization,
+          maxLength: maxLength,
+          inputFormatters: inputFormatters,
           style: AppTextStyles.bodyLarge,
           decoration: InputDecoration(
+            counterText: '',
             hintText: hintText,
             hintStyle: AppTextStyles.bodyLarge.copyWith(
               color: AppColors.textHint,
               fontWeight: FontWeight.w400,
             ),
             fillColor: AppColors.surfaceMuted,
+            contentPadding: contentPadding,
           ),
         ),
       ],
