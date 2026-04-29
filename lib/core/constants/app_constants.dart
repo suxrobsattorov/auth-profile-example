@@ -14,8 +14,6 @@ class AppConstants {
   static const String logoAsset = 'assets/images/logo.png';
   static const String googleAsset = 'assets/images/google.png';
   static const String appleAsset = 'assets/images/apple.png';
-  static const String appStore = 'assets/images/app-store.png';
-  static const String googlePlay = 'assets/images/google-play.png';
 
   /// Icons
   static const String homeIconAsset = 'assets/icons/home.png';
@@ -28,4 +26,5 @@ class AppConstants {
   static const String info = 'assets/icons/info.png';
   static const String camera = 'assets/icons/camera.png';
   static const String galery = 'assets/icons/galery.png';
+  static const String download = 'assets/icons/download.png';
 }
