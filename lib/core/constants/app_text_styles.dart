@@ -5,22 +5,22 @@ class AppTextStyles {
   AppTextStyles._();
 
   static const TextStyle headlineLarge = TextStyle(
-    fontSize: 34,
+    fontSize: 30,
     height: 1.1,
-    fontWeight: FontWeight.w700,
+    fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
   );
 
   static const TextStyle headlineMedium = TextStyle(
-    fontSize: 28,
+    fontSize: 24,
     height: 1.15,
-    fontWeight: FontWeight.w700,
+    fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
   );
 
   static const TextStyle headlineSmall = TextStyle(
-    fontSize: 22,
-    fontWeight: FontWeight.w600,
+    fontSize: 20,
+    fontWeight: FontWeight.w500,
     color: AppColors.textPrimary,
   );
 
@@ -31,19 +31,19 @@ class AppTextStyles {
   );
 
   static const TextStyle titleMedium = TextStyle(
-    fontSize: 16,
-    fontWeight: FontWeight.w600,
-    color: AppColors.textPrimary,
-  );
-
-  static const TextStyle bodyLarge = TextStyle(
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: FontWeight.w500,
     color: AppColors.textPrimary,
   );
 
-  static const TextStyle bodyMedium = TextStyle(
+  static const TextStyle bodyLarge = TextStyle(
     fontSize: 14,
+    fontWeight: FontWeight.w400,
+    color: AppColors.textPrimary,
+  );
+
+  static const TextStyle bodyMedium = TextStyle(
+    fontSize: 12,
     height: 1.45,
     fontWeight: FontWeight.normal,
     color: AppColors.textSecondary,
@@ -56,14 +56,14 @@ class AppTextStyles {
   );
 
   static const TextStyle labelLarge = TextStyle(
-    fontSize: 16,
-    fontWeight: FontWeight.w600,
+    fontSize: 15,
+    fontWeight: FontWeight.w500,
     color: AppColors.white,
   );
 
   static const TextStyle labelMedium = TextStyle(
     fontSize: 14,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w500,
     color: AppColors.primaryDark,
   );
 }

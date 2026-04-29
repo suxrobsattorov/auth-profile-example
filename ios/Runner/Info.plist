@@ -8,6 +8,11 @@
 	<string>Profil rasmi olish uchun kameraga ruxsat kerak</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Profil rasmini saqlash uchun galereyaga ruxsat kerak</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>https</string>
+		<string>http</string>
+	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

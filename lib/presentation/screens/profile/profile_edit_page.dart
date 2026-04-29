@@ -25,27 +25,10 @@ class ProfileEditPage extends StatefulWidget {
 }
 
 class _ProfileEditPageState extends State<ProfileEditPage> {
-  static const List<String> _locations = [
-    'Andijon viloyati',
-    'Buxoro viloyati',
-    'Farg\'ona viloyati',
-    'Jizzax viloyati',
-    'Namangan viloyati',
-    'Navoiy viloyati',
-    'Qashqadaryo viloyati',
-    'Qoraqalpog\'iston Respublikasi',
-    'Samarqand viloyati',
-    'Sirdaryo viloyati',
-    'Surxondaryo viloyati',
-    'Toshkent shahri',
-    'Toshkent viloyati',
-    'Xorazm viloyati',
-  ];
-
   late final TextEditingController _firstNameController;
   late final TextEditingController _lastNameController;
   late final TextEditingController _emailController;
-  late String _selectedLocation;
+  late final TextEditingController _locationController;
 
   File? _pickedImage;
   bool _isSaving = false;
@@ -56,7 +39,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     _firstNameController = TextEditingController(text: widget.initialFirstName);
     _lastNameController = TextEditingController(text: widget.initialLastName);
     _emailController = TextEditingController(text: widget.initialEmail);
-    _selectedLocation = widget.initialLocation;
+    _locationController = TextEditingController(text: widget.initialLocation);
   }
 
   @override
@@ -64,13 +47,14 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
+    _locationController.dispose();
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImage(ImageSource source) async {
     try {
       final XFile? file = await ImagePicker().pickImage(
-        source: ImageSource.gallery,
+        source: source,
         imageQuality: 85,
         maxWidth: 512,
         maxHeight: 512,
@@ -82,95 +66,81 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Galereyaga ruxsat berilmadi yoki xatolik yuz berdi'),
+          content: Text('Ruxsat berilmadi yoki xatolik yuz berdi'),
         ),
       );
     }
   }
 
-  Future<void> _pickLocation() async {
-    final result = await showModalBottomSheet<String>(
+  Future<void> _showImageSourceSheet() async {
+    await showModalBottomSheet<void>(
       context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 16),
-            Container(
-              width: 42,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.divider,
-                borderRadius: BorderRadius.circular(999),
-              ),
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final bottomPadding = MediaQuery.of(ctx).viewPadding.bottom;
+        return Padding(
+          padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + bottomPadding),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: const [
+                BoxShadow(
+                  color: AppColors.shadow,
+                  blurRadius: 30,
+                  offset: Offset(0, 18),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text('Hudud tanlang', style: AppTextStyles.titleLarge),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Flexible(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: _locations.length,
-                itemBuilder: (ctx, index) {
-                  final loc = _locations[index];
-                  final isSelected = loc == _selectedLocation;
-                  return InkWell(
-                    onTap: () => Navigator.of(ctx).pop(loc),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 14,
-                      ),
-                      color: isSelected
-                          ? AppColors.primaryLight
-                          : Colors.transparent,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              loc,
-                              style: AppTextStyles.bodyLarge.copyWith(
-                                color: isSelected
-                                    ? AppColors.primaryDark
-                                    : AppColors.textPrimary,
-                                fontWeight: isSelected
-                                    ? FontWeight.w600
-                                    : FontWeight.w400,
-                              ),
-                            ),
-                          ),
-                          if (isSelected)
-                            const Icon(
-                              Icons.check_rounded,
-                              color: AppColors.primaryDark,
-                              size: 20,
-                            ),
-                        ],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 42,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: AppColors.divider,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Rasm qo\'shish',
+                  style: AppTextStyles.titleLarge,
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ImageSourceOption(
+                        assetPath: AppConstants.camera,
+                        label: 'Kamera',
+                        onTap: () {
+                          Navigator.of(ctx).pop();
+                          _pickImage(ImageSource.camera);
+                        },
                       ),
                     ),
-                  );
-                },
-              ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _ImageSourceOption(
+                        assetPath: AppConstants.galery,
+                        label: 'Galereya',
+                        onTap: () {
+                          Navigator.of(ctx).pop();
+                          _pickImage(ImageSource.gallery);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
-
-    if (result != null && mounted) {
-      setState(() => _selectedLocation = result);
-    }
   }
 
   Future<void> _save() async {
@@ -189,19 +159,10 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
         centerTitle: true,
         leading: IconButton(
           onPressed: () => Navigator.of(context).pop(),
-          icon: Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceMuted,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.divider),
-            ),
-            child: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 16,
-              color: AppColors.textPrimary,
-            ),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 18,
+            color: AppColors.textPrimary,
           ),
         ),
         title: const Text(
@@ -217,7 +178,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             children: [
               _AvatarSection(
                 pickedImage: _pickedImage,
-                onPickImage: _pickImage,
+                onPickImage: _showImageSourceSheet,
               ),
               const SizedBox(height: 28),
               _SectionCard(
@@ -245,13 +206,11 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                     keyboardType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: 12),
-                  _LocationField(
+                  _EditField(
                     label: 'Hudud',
-                    value: _selectedLocation.isEmpty
-                        ? 'Hududni tanlang'
-                        : _selectedLocation,
-                    isEmpty: _selectedLocation.isEmpty,
-                    onTap: _pickLocation,
+                    controller: _locationController,
+                    hintText: 'Hududingizni kiriting',
+                    textCapitalization: TextCapitalization.words,
                   ),
                 ],
               ),
@@ -260,7 +219,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                 label: 'Saqlash',
                 onPressed: _save,
                 isLoading: _isSaving,
-                icon: Icons.check_rounded,
               ),
               const SizedBox(height: 24),
             ],
@@ -308,6 +266,7 @@ class _AvatarSection extends StatelessWidget {
               child: Container(
                 width: 38,
                 height: 38,
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: AppColors.primary,
@@ -320,10 +279,11 @@ class _AvatarSection extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.camera_alt_rounded,
+                child: const AssetIcon(
+                  assetPath: AppConstants.camera,
                   size: 18,
                   color: AppColors.white,
+                  fallback: Icons.camera_alt_rounded,
                 ),
               ),
             ),
@@ -359,6 +319,61 @@ class _SectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: children,
+      ),
+    );
+  }
+}
+
+class _ImageSourceOption extends StatelessWidget {
+  final String assetPath;
+  final String label;
+  final VoidCallback onTap;
+
+  const _ImageSourceOption({
+    required this.assetPath,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.secondaryLight,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: const BoxDecoration(
+                  color: AppColors.primaryLight,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: AssetIcon(
+                    assetPath: assetPath,
+                    size: 24,
+                    color: AppColors.primaryDark,
+                    fallback: Icons.image_rounded,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                label,
+                style: AppTextStyles.titleMedium.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -404,69 +419,6 @@ class _EditField extends StatelessWidget {
               fontWeight: FontWeight.w400,
             ),
             fillColor: AppColors.surfaceMuted,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _LocationField extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool isEmpty;
-  final VoidCallback onTap;
-
-  const _LocationField({
-    required this.label,
-    required this.value,
-    required this.isEmpty,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: AppTextStyles.bodySmall.copyWith(
-            fontWeight: FontWeight.w600,
-            color: AppColors.textSecondary,
-          ),
-        ),
-        const SizedBox(height: 6),
-        GestureDetector(
-          onTap: onTap,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceMuted,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppColors.divider),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    value,
-                    style: AppTextStyles.bodyLarge.copyWith(
-                      color:
-                          isEmpty ? AppColors.textHint : AppColors.textPrimary,
-                      fontWeight:
-                          isEmpty ? FontWeight.w400 : FontWeight.w500,
-                    ),
-                  ),
-                ),
-                const Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: AppColors.textHint,
-                  size: 22,
-                ),
-              ],
-            ),
           ),
         ),
       ],
