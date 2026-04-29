@@ -18,12 +18,12 @@ Future<void> main() async {
     flagEmoji = await storage.getFlagEmoji();
   }
 
-  final isLoggedIn = hasToken && phone != null;
+  final isLoggedIn = hasToken;
 
   runApp(App(
     isLoggedIn: isLoggedIn,
-    phone: isLoggedIn ? phone : null,
-    countryName: isLoggedIn ? countryName : null,
-    flagEmoji: isLoggedIn ? flagEmoji : null,
+    phone: isLoggedIn ? (phone ?? '') : null,
+    countryName: isLoggedIn ? (countryName ?? '') : null,
+    flagEmoji: isLoggedIn ? (flagEmoji ?? '') : null,
   ));
 }

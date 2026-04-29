@@ -4,8 +4,9 @@ import 'package:auth_profile_example/core/constants/constants.dart';
 class SocialAuthButton extends StatelessWidget {
   final String label;
   final String imagePath;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final bool isDark;
+  final bool isLoading;
 
   const SocialAuthButton({
     super.key,
@@ -13,6 +14,7 @@ class SocialAuthButton extends StatelessWidget {
     required this.imagePath,
     required this.onTap,
     this.isDark = false,
+    this.isLoading = false,
   });
 
   @override
@@ -25,7 +27,7 @@ class SocialAuthButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
+        onTap: isLoading ? null : onTap,
         child: Ink(
           height: 60,
           decoration: BoxDecoration(
@@ -36,13 +38,25 @@ class SocialAuthButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset(
-                imagePath,
-                width: 24,
-                height: 24,
-                fit: BoxFit.contain,
-              ),
-              const SizedBox(width: 16),
+              if (isLoading) ...[
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: foregroundColor,
+                    strokeWidth: 2,
+                  ),
+                ),
+                const SizedBox(width: 16),
+              ] else ...[
+                Image.asset(
+                  imagePath,
+                  width: 24,
+                  height: 24,
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(width: 16),
+              ],
               Text(
                 label,
                 style: AppTextStyles.titleMedium.copyWith(

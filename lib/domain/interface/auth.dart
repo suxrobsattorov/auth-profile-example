@@ -5,6 +5,8 @@ abstract class IAuthRepository {
 
   Future<AuthToken> verifyOtp(String phone, String code);
 
+  Future<AuthToken> loginWithGoogle(String idToken);
+
   Future<AuthToken> refreshSession(String refreshToken);
 
   Future<void> logout(String refreshToken);

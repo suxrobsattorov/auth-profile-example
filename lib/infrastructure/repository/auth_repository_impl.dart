@@ -37,6 +37,23 @@ class AuthRepositoryImpl implements IAuthRepository {
   }
 
   @override
+  Future<AuthToken> loginWithGoogle(String idToken) async {
+    final response = await _dioClient.client().post(
+      '/api/auth/google/',
+      data: {'id_token': idToken},
+    );
+
+    final data = _parseJson(response.data);
+    debugPrint('[Repo] loginWithGoogle parsed data: $data');
+
+    return AuthToken(
+      accessToken: data['access'] as String,
+      refreshToken: data['refresh'] as String,
+      isNewUser: (data['is_new_user'] as bool?) ?? false,
+    );
+  }
+
+  @override
   Future<AuthToken> refreshSession(String refreshToken) async {
     final response = await _dioClient.client().post(
       '/api/auth/token/refresh/',

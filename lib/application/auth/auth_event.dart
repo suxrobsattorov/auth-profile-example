@@ -16,6 +16,10 @@ class AuthRequestOtp extends AuthEvent {
   List<Object> get props => [phone];
 }
 
+class AuthGoogleSignInRequested extends AuthEvent {
+  const AuthGoogleSignInRequested();
+}
+
 class AuthVerifyOtp extends AuthEvent {
   final String phone;
   final String code;

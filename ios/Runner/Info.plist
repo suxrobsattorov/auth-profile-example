@@ -23,8 +23,21 @@
 		<string>$(EXECUTABLE_NAME)</string>
 		<key>CFBundleIdentifier</key>
 		<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>com.googleusercontent.apps.913143229825-6t2ku4uup4ur3iv7u5lfsamdjtva27qe</string>
+				</array>
+			</dict>
+		</array>
 		<key>CFBundleInfoDictionaryVersion</key>
 		<string>6.0</string>
+		<key>GIDClientID</key>
+		<string>913143229825-6t2ku4uup4ur3iv7u5lfsamdjtva27qe.apps.googleusercontent.com</string>
 		<key>CFBundleName</key>
 		<string>Profile</string>
 		<key>CFBundlePackageType</key>

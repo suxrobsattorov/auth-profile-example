@@ -18,8 +18,14 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final normalizedIdentity = phoneNumber.trim();
+    final isGoogleSession =
+        flagEmoji == '🌐' || normalizedIdentity.contains('@');
     final formattedPhoneNumber =
         AppPhoneNumberFormatter.tryFormatSupportedInternational(phoneNumber);
+    final sessionIdentity = normalizedIdentity.isEmpty
+        ? (isGoogleSession ? 'Google akkaunti' : 'Profil')
+        : formattedPhoneNumber;
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -51,7 +57,7 @@ class HomePage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
-                      '$flagEmoji  OTP tasdiqlandi',
+                      '${flagEmoji.isEmpty ? '•' : flagEmoji}  ${isGoogleSession ? 'Google ulandi' : 'OTP tasdiqlandi'}',
                       style: AppTextStyles.bodySmall.copyWith(
                         color: AppColors.white,
                         fontWeight: FontWeight.w600,
@@ -90,14 +96,16 @@ class HomePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Raqamingiz muvaffaqiyatli tasdiqlandi.',
+                    isGoogleSession
+                        ? 'Google akkauntingiz muvaffaqiyatli ulandi.'
+                        : 'Raqamingiz muvaffaqiyatli tasdiqlandi.',
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: AppColors.white.withValues(alpha: 0.88),
                     ),
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    formattedPhoneNumber,
+                    sessionIdentity,
                     style: AppTextStyles.titleLarge.copyWith(
                       color: AppColors.white,
                     ),
@@ -108,7 +116,7 @@ class HomePage extends StatelessWidget {
             const SizedBox(height: 24),
             const InfoCard(
               icon: Icons.shield_rounded,
-              title: 'OTP muvaffaqiyatli tasdiqlandi',
+              title: 'Sessiya muvaffaqiyatli ochildi',
               subtitle: 'Asosiy qismga o\'tdingiz.',
             ),
             const SizedBox(height: 16),

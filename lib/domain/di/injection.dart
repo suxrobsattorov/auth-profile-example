@@ -4,7 +4,9 @@ import 'package:get_it/get_it.dart';
 import 'package:auth_profile_example/application/auth/auth_bloc.dart';
 import 'package:auth_profile_example/application/profile/profile_bloc.dart';
 import 'package:auth_profile_example/domain/interface/auth.dart';
+import 'package:auth_profile_example/domain/interface/google_auth.dart';
 import 'package:auth_profile_example/domain/interface/profile.dart';
+import 'package:auth_profile_example/infrastructure/auth/google_auth_service_impl.dart';
 import 'package:auth_profile_example/infrastructure/local/token_storage.dart';
 import 'package:auth_profile_example/infrastructure/network/dio_client.dart';
 import 'package:auth_profile_example/infrastructure/repository/auth_repository_impl.dart';
@@ -15,6 +17,7 @@ final sl = GetIt.instance;
 Future<void> initDependencies() async {
   _registerAlice();
   _registerStorage();
+  _registerServices();
   _registerNetwork();
   _registerRepositories();
   _registerBlocs();
@@ -28,6 +31,10 @@ void _registerNetwork() {
   sl.registerLazySingleton<DioClient>(
     () => DioClient(sl<Alice>(), sl<TokenStorage>()),
   );
+}
+
+void _registerServices() {
+  sl.registerLazySingleton<IGoogleAuthService>(() => GoogleAuthServiceImpl());
 }
 
 void _registerStorage() {
@@ -47,6 +54,8 @@ void _registerBlocs() {
   sl.registerFactory<AuthBloc>(
     () => AuthBloc(
       repository: sl<IAuthRepository>(),
+      googleAuthService: sl<IGoogleAuthService>(),
+      profileRepository: sl<IProfileRepository>(),
       storage: sl<TokenStorage>(),
     ),
   );

@@ -468,6 +468,8 @@ class _ProfilePageState extends State<ProfilePage> {
       switch (method.toLowerCase()) {
         case 'phone':
           return 'Telefon + OTP';
+        case 'google':
+          return 'Google';
         case 'email':
           return 'Email';
         default:

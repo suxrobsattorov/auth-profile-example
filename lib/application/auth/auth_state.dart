@@ -15,6 +15,10 @@ class AuthLoading extends AuthState {
   const AuthLoading();
 }
 
+class AuthGoogleLoading extends AuthState {
+  const AuthGoogleLoading();
+}
+
 class AuthOtpSent extends AuthState {
   const AuthOtpSent();
 }

@@ -83,9 +83,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
           navigatorKey: _navigatorKey,
           home: widget.isLoggedIn
               ? MainShellPage(
-                  phoneNumber: widget.phone!,
-                  countryName: widget.countryName!,
-                  flagEmoji: widget.flagEmoji!,
+                  phoneNumber: widget.phone ?? '',
+                  countryName: widget.countryName ?? '',
+                  flagEmoji: widget.flagEmoji ?? '',
                 )
               : const LoginPage(),
         ),

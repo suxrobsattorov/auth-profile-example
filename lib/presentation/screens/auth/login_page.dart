@@ -8,10 +8,12 @@ import 'package:auth_profile_example/core/constants/constants.dart';
 import 'package:alice/alice.dart';
 import 'package:auth_profile_example/domain/di/injection.dart';
 import 'package:auth_profile_example/presentation/screens/auth/otp_page.dart';
+import 'package:auth_profile_example/presentation/screens/main/main_shell_page.dart';
 import 'package:auth_profile_example/presentation/widgets/background_orb.dart';
 import 'package:auth_profile_example/presentation/screens/auth/widgets/login_form.dart';
 import 'package:auth_profile_example/presentation/screens/auth/widgets/or_divider.dart';
 import 'package:auth_profile_example/presentation/screens/auth/widgets/social_auth_button.dart';
+import 'package:auth_profile_example/infrastructure/local/token_storage.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -36,6 +38,31 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  void _onGoogleSignIn() {
+    FocusScope.of(context).unfocus();
+    context.read<AuthBloc>().add(const AuthGoogleSignInRequested());
+  }
+
+  Future<void> _openAuthorizedHome(BuildContext context) async {
+    final storage = sl<TokenStorage>();
+    final phone = await storage.getPhone() ?? '';
+    final countryName = await storage.getCountryName() ?? '';
+    final flagEmoji = await storage.getFlagEmoji() ?? '';
+
+    if (!context.mounted) return;
+    if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => MainShellPage(
+          phoneNumber: phone,
+          countryName: countryName,
+          flagEmoji: flagEmoji,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
@@ -50,6 +77,8 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           );
+        } else if (state is AuthSuccess) {
+          _openAuthorizedHome(context);
         } else if (state is AuthFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message)),
@@ -59,6 +88,7 @@ class _LoginPageState extends State<LoginPage> {
       child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
           final isLoading = state is AuthLoading;
+          final isGoogleLoading = state is AuthGoogleLoading;
           return Scaffold(
             body: Container(
               decoration: const BoxDecoration(
@@ -137,13 +167,15 @@ class _LoginPageState extends State<LoginPage> {
                                     SocialAuthButton(
                                       label: 'Google orqali kirish',
                                       imagePath: AppConstants.googleAsset,
-                                      onTap: () => _showSocialMessage(context),
+                                      onTap: _onGoogleSignIn,
+                                      isLoading: isGoogleLoading,
                                     ),
                                     const SizedBox(height: 16),
                                     SocialAuthButton(
                                       label: 'Apple orqali kirish',
                                       imagePath: AppConstants.appleAsset,
                                       onTap: () => _showSocialMessage(context),
+                                      isLoading: isGoogleLoading,
                                     ),
                                   ],
                                 ),
