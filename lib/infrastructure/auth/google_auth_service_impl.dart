@@ -15,33 +15,18 @@ class GoogleAuthServiceImpl implements GoogleAuthService {
 
   @override
   Future<GoogleAuthCredential> signIn() async {
-    debugPrint('=== [GoogleAuth] signIn() boshlandi ===');
-    debugPrint('[GoogleAuth] clientId: ${GoogleAuthConfig.clientId}');
-    debugPrint('[GoogleAuth] serverClientId: ${GoogleAuthConfig.serverClientId}');
-
-    debugPrint('[GoogleAuth] _initialize() chaqirilmoqda...');
     await _initialize();
-    debugPrint('[GoogleAuth] _initialize() tugadi');
 
-    final supports = _googleSignIn.supportsAuthenticate();
-    debugPrint('[GoogleAuth] supportsAuthenticate: $supports');
-
-    if (!supports) {
+    if (!_googleSignIn.supportsAuthenticate()) {
       throw const GoogleAuthException(
         'Joriy platformada Google kirish qo\'llab-quvvatlanmaydi.',
       );
     }
 
     try {
-      debugPrint('[GoogleAuth] authenticate() chaqirilmoqda...');
       final user = await _googleSignIn.authenticate();
-      debugPrint('[GoogleAuth] authenticate() tugadi');
-      debugPrint('[GoogleAuth] user.id: ${user.id}');
-      debugPrint('[GoogleAuth] user.email: ${user.email}');
-      debugPrint('[GoogleAuth] user.displayName: ${user.displayName}');
 
       final idToken = user.authentication.idToken;
-      debugPrint('[GoogleAuth] idToken: ${idToken == null ? "NULL !!!" : "mavjud (${idToken.length} belgi)"}');
 
       if (idToken == null || idToken.isEmpty) {
         throw const GoogleAuthException(
@@ -53,18 +38,13 @@ class GoogleAuthServiceImpl implements GoogleAuthService {
 
       String? serverAuthCode;
       if (GoogleAuthConfig.hasServerClientId) {
-        debugPrint('[GoogleAuth] authorizeServer() chaqirilmoqda...');
         try {
           final serverAuth = await user.authorizationClient
               .authorizeServer(GoogleAuthConfig.serverScopes);
           serverAuthCode = serverAuth?.serverAuthCode;
-          debugPrint('[GoogleAuth] serverAuthCode: ${serverAuthCode ?? "null"}');
-        } catch (e) {
-          debugPrint('[GoogleAuth] authorizeServer skipped: $e');
-        }
+        } catch (_) {}
       }
 
-      debugPrint('[GoogleAuth] GoogleAuthCredential yaratilmoqda...');
       return GoogleAuthCredential(
         googleUserId: user.id,
         email: user.email,
@@ -74,15 +54,8 @@ class GoogleAuthServiceImpl implements GoogleAuthService {
         serverAuthCode: serverAuthCode,
       );
     } on GoogleSignInException catch (e) {
-      debugPrint('=== [GoogleAuth] GoogleSignInException ===');
-      debugPrint('[GoogleAuth] code: ${e.code}');
-      debugPrint('[GoogleAuth] description: ${e.description}');
-      debugPrint('[GoogleAuth] details: ${e.details}');
       throw GoogleAuthException(_mapGoogleError(e));
-    } catch (e, st) {
-      debugPrint('=== [GoogleAuth] Unknown error ===');
-      debugPrint('[GoogleAuth] error: $e');
-      debugPrint('[GoogleAuth] stacktrace: $st');
+    } catch (e) {
       if (e is GoogleAuthException) rethrow;
       throw const GoogleAuthException(
         'Google orqali kirishda noma\'lum xatolik yuz berdi.',
@@ -96,7 +69,6 @@ class GoogleAuthServiceImpl implements GoogleAuthService {
     try {
       await _initializeFuture;
       await _googleSignIn.signOut();
-      debugPrint('[GoogleAuth] signOut() bajarildi');
     } on GoogleSignInException {
     } on PlatformException catch (e, st) {
       debugPrint('[GoogleAuth] signOut platform error ignored: $e\n$st');
@@ -106,13 +78,7 @@ class GoogleAuthServiceImpl implements GoogleAuthService {
   }
 
   Future<void> _initialize() async {
-    if (_initializeFuture != null) {
-      debugPrint('[GoogleAuth] allaqachon initialized, skip');
-      return _initializeFuture!;
-    }
-    debugPrint('[GoogleAuth] initialize() params:');
-    debugPrint('[GoogleAuth]   clientId=${GoogleAuthConfig.clientId}');
-    debugPrint('[GoogleAuth]   serverClientId=${GoogleAuthConfig.serverClientId}');
+    if (_initializeFuture != null) return _initializeFuture!;
     _initializeFuture = _googleSignIn.initialize(
       clientId: GoogleAuthConfig.clientId,
       serverClientId: GoogleAuthConfig.serverClientId,
@@ -123,19 +89,19 @@ class GoogleAuthServiceImpl implements GoogleAuthService {
   String _mapGoogleError(GoogleSignInException exception) {
     switch (exception.code) {
       case GoogleSignInExceptionCode.canceled:
-        return 'Google kirish bekor qilindi. (canceled)';
+        return 'Google kirish bekor qilindi.';
       case GoogleSignInExceptionCode.interrupted:
-        return 'Google kirish uzilib qoldi. (interrupted)';
+        return 'Google kirish uzilib qoldi.';
       case GoogleSignInExceptionCode.clientConfigurationError:
-        return 'Google konfiguratsiya xatosi. SHA-1/SHA256 va package name tekshiring. (clientConfigurationError)';
+        return 'Google konfiguratsiya xatosi. SHA-1 va package name tekshiring.';
       case GoogleSignInExceptionCode.providerConfigurationError:
-        return 'Google provider xatosi. (providerConfigurationError)';
+        return 'Google provider xatosi.';
       case GoogleSignInExceptionCode.uiUnavailable:
-        return 'Google kirish oynasi ochilmadi. (uiUnavailable)';
+        return 'Google kirish oynasi ochilmadi.';
       case GoogleSignInExceptionCode.userMismatch:
-        return 'Google akkaunt mos kelmadi. (userMismatch)';
+        return 'Google akkaunt mos kelmadi.';
       case GoogleSignInExceptionCode.unknownError:
-        return 'Google noma\'lum xatolik. (unknownError)';
+        return 'Google noma\'lum xatolik.';
     }
   }
 }
