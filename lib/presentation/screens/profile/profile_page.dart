@@ -11,8 +11,8 @@ import 'package:auth_profile_example/core/constants/constants.dart';
 import 'package:auth_profile_example/core/utils/phone_number_formatter.dart';
 import 'package:auth_profile_example/domain/di/injection.dart';
 import 'package:auth_profile_example/domain/model/user_profile.dart';
-import 'package:auth_profile_example/presentation/screens/auth/login_page.dart';
 import 'package:auth_profile_example/presentation/screens/profile/profile_edit_page.dart';
+import 'package:auth_profile_example/presentation/screens/profile/profile_static_pages.dart';
 import 'package:auth_profile_example/presentation/screens/profile/widgets/profile_info_row.dart';
 import 'package:auth_profile_example/presentation/widgets/common/asset_icon.dart';
 
@@ -78,6 +78,24 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
       ),
+    );
+  }
+
+  void _openNotifications(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const NotificationsPage()),
+    );
+  }
+
+  void _openHelpCenter(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const HelpCenterPage()),
+    );
+  }
+
+  void _openAbout(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const AboutPage()),
     );
   }
 
@@ -226,14 +244,6 @@ class _ProfilePageState extends State<ProfilePage> {
           BlocListener<AuthBloc, AuthState>(
             listener: (context, state) {
               if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
-
-              if (state is AuthLoggedOut) {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const LoginPage()),
-                  (route) => false,
-                );
-                return;
-              }
 
               if (state is AuthFailure) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -410,19 +420,22 @@ class _ProfilePageState extends State<ProfilePage> {
                           : () => _openProfileEdit(context, profile),
                     ),
                     const SizedBox(height: 10),
-                    const _ProfileActionButton(
+                    _ProfileActionButton(
                       icon: AppConstants.notification,
                       title: 'Bildirishnomalar',
+                      onTap: () => _openNotifications(context),
                     ),
                     const SizedBox(height: 10),
-                    const _ProfileActionButton(
+                    _ProfileActionButton(
                       icon: AppConstants.support,
                       title: 'Yordam markazi',
+                      onTap: () => _openHelpCenter(context),
                     ),
                     const SizedBox(height: 10),
-                    const _ProfileActionButton(
+                    _ProfileActionButton(
                       icon: AppConstants.info,
                       title: 'Biz haqimizda',
+                      onTap: () => _openAbout(context),
                     ),
                     const SizedBox(height: 10),
                     _ProfileActionButton(

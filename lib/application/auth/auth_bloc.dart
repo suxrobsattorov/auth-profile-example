@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,8 +11,12 @@ import 'auth_event.dart';
 import 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
+  static const _refreshInterval = Duration(minutes: 30);
+
   final IAuthRepository _repository;
   final TokenStorage _storage;
+  Timer? _refreshTimer;
+  bool _isRefreshing = false;
 
   AuthBloc({required IAuthRepository repository, required TokenStorage storage})
       : _repository = repository,
@@ -18,6 +24,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         super(const AuthInitial()) {
     on<AuthRequestOtp>(_onRequestOtp);
     on<AuthVerifyOtp>(_onVerifyOtp);
+    on<AuthSessionMonitoringStarted>(_onSessionMonitoringStarted);
+    on<AuthSessionRefreshRequested>(_onSessionRefreshRequested);
     on<AuthLogoutRequested>(_onLogoutRequested);
   }
 
@@ -25,7 +33,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthRequestOtp event,
     Emitter<AuthState> emit,
   ) async {
-    debugPrint('[AuthBloc] RequestOtp → phone: ${event.phone}');
+    debugPrint('[AuthBloc] RequestOtp -> phone: ${event.phone}');
     emit(const AuthLoading());
     try {
       await _repository.requestOtp(event.phone);
@@ -34,7 +42,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } on DioException catch (e) {
       final msg = _extractDioError(e);
       debugPrint(
-          '[AuthBloc] DioException: $msg | status: ${e.response?.statusCode}');
+        '[AuthBloc] DioException: $msg | status: ${e.response?.statusCode}',
+      );
       emit(AuthFailure(msg));
     } catch (e, st) {
       debugPrint('[AuthBloc] RequestOtp unknown error: $e\n$st');
@@ -47,7 +56,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     debugPrint(
-        '[AuthBloc] VerifyOtp → phone: ${event.phone}, code: ${event.code}');
+      '[AuthBloc] VerifyOtp -> phone: ${event.phone}, code: ${event.code}',
+    );
     emit(const AuthLoading());
     try {
       final token = await _repository.verifyOtp(event.phone, event.code);
@@ -60,8 +70,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         countryName: event.countryName,
         flagEmoji: event.flagEmoji,
       );
+      _startRefreshTimer();
       debugPrint(
-          '[AuthBloc] Auth muvaffaqiyatli ✓ isNewUser: ${token.isNewUser}');
+        '[AuthBloc] Auth muvaffaqiyatli ✓ isNewUser: ${token.isNewUser}',
+      );
       emit(AuthSuccess(
         accessToken: token.accessToken,
         refreshToken: token.refreshToken,
@@ -70,11 +82,73 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } on DioException catch (e) {
       final msg = _extractDioError(e);
       debugPrint(
-          '[AuthBloc] DioException: $msg | status: ${e.response?.statusCode}');
+        '[AuthBloc] DioException: $msg | status: ${e.response?.statusCode}',
+      );
       emit(AuthFailure(msg));
     } catch (e, st) {
       debugPrint('[AuthBloc] VerifyOtp unknown error: $e\n$st');
       emit(const AuthFailure('Xatolik yuz berdi. Qayta urinib ko\'ring.'));
+    }
+  }
+
+  Future<void> _onSessionMonitoringStarted(
+    AuthSessionMonitoringStarted event,
+    Emitter<AuthState> emit,
+  ) async {
+    final refreshToken = await _storage.getRefreshToken();
+    if (refreshToken == null || refreshToken.isEmpty) {
+      return;
+    }
+
+    _startRefreshTimer();
+    add(const AuthSessionRefreshRequested(onlyIfDue: true));
+  }
+
+  Future<void> _onSessionRefreshRequested(
+    AuthSessionRefreshRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    if (_isRefreshing) return;
+
+    final refreshToken = await _storage.getRefreshToken();
+    if (refreshToken == null || refreshToken.isEmpty) {
+      _stopRefreshTimer();
+      return;
+    }
+
+    if (event.onlyIfDue) {
+      final updatedAt = await _storage.getTokensUpdatedAt();
+      final now = DateTime.now().toUtc();
+      if (updatedAt != null &&
+          now.difference(updatedAt.toUtc()) < _refreshInterval) {
+        return;
+      }
+    }
+
+    _isRefreshing = true;
+    try {
+      final token = await _repository.refreshSession(refreshToken);
+      await _storage.saveTokens(
+        access: token.accessToken,
+        refresh: token.refreshToken,
+      );
+      debugPrint('[AuthBloc] Session refreshed ✓');
+    } on DioException catch (e) {
+      final statusCode = e.response?.statusCode;
+      final msg = _extractDioError(e);
+      debugPrint(
+        '[AuthBloc] Refresh DioException: $msg | status: $statusCode',
+      );
+
+      if (statusCode == 400 || statusCode == 401) {
+        _stopRefreshTimer();
+        await _storage.clearAll();
+        emit(const AuthLoggedOut());
+      }
+    } catch (e, st) {
+      debugPrint('[AuthBloc] Refresh unknown error: $e\n$st');
+    } finally {
+      _isRefreshing = false;
     }
   }
 
@@ -87,6 +161,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     final refreshToken = await _storage.getRefreshToken();
     if (refreshToken == null || refreshToken.isEmpty) {
+      _stopRefreshTimer();
       await _storage.clearAll();
       emit(const AuthLoggedOut());
       return;
@@ -94,6 +169,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     try {
       await _repository.logout(refreshToken);
+      _stopRefreshTimer();
       await _storage.clearAll();
       emit(const AuthLoggedOut());
     } on DioException catch (e) {
@@ -105,8 +181,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } catch (e, st) {
       debugPrint('[AuthBloc] Logout unknown error: $e\n$st');
       emit(const AuthFailure(
-          'Tizimdan chiqib bo\'lmadi. Qayta urinib ko\'ring.'));
+        'Tizimdan chiqib bo\'lmadi. Qayta urinib ko\'ring.',
+      ));
     }
+  }
+
+  void _startRefreshTimer() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(_refreshInterval, (_) {
+      add(const AuthSessionRefreshRequested());
+    });
+  }
+
+  void _stopRefreshTimer() {
+    _refreshTimer?.cancel();
+    _refreshTimer = null;
   }
 
   String _extractDioError(DioException e) {
@@ -115,9 +204,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       return data['detail'].toString();
     }
     if (e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.receiveTimeout) {
+        e.type == DioExceptionType.receiveTimeout ||
+        e.type == DioExceptionType.sendTimeout ||
+        e.type == DioExceptionType.connectionError) {
       return 'Server bilan aloqa yo\'q. Internetni tekshiring.';
     }
     return 'Xatolik yuz berdi. Qayta urinib ko\'ring.';
+  }
+
+  @override
+  Future<void> close() {
+    _stopRefreshTimer();
+    return super.close();
   }
 }

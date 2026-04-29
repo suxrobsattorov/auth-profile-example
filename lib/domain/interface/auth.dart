@@ -5,5 +5,7 @@ abstract class IAuthRepository {
 
   Future<AuthToken> verifyOtp(String phone, String code);
 
+  Future<AuthToken> refreshSession(String refreshToken);
+
   Future<void> logout(String refreshToken);
 }

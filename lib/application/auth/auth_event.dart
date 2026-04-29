@@ -33,6 +33,19 @@ class AuthVerifyOtp extends AuthEvent {
   List<Object> get props => [phone, code, countryName, flagEmoji];
 }
 
+class AuthSessionMonitoringStarted extends AuthEvent {
+  const AuthSessionMonitoringStarted();
+}
+
+class AuthSessionRefreshRequested extends AuthEvent {
+  final bool onlyIfDue;
+
+  const AuthSessionRefreshRequested({this.onlyIfDue = false});
+
+  @override
+  List<Object> get props => [onlyIfDue];
+}
+
 class AuthLogoutRequested extends AuthEvent {
   const AuthLogoutRequested();
 }

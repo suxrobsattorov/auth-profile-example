@@ -37,9 +37,25 @@ class AuthRepositoryImpl implements IAuthRepository {
   }
 
   @override
+  Future<AuthToken> refreshSession(String refreshToken) async {
+    final response = await _dioClient.client().post(
+      '/api/auth/token/refresh/',
+      data: {'refresh': refreshToken},
+    );
+
+    final data = _parseJson(response.data);
+
+    return AuthToken(
+      accessToken: data['access'] as String,
+      refreshToken: (data['refresh'] as String?) ?? refreshToken,
+      isNewUser: false,
+    );
+  }
+
+  @override
   Future<void> logout(String refreshToken) async {
     await _dioClient.client(requireAuth: true).post(
-      '/api/users/logout/',
+      '/api/auth/logout/',
       data: {'refresh': refreshToken},
     );
   }

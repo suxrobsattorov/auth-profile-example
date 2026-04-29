@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class TokenStorage {
   static const _accessKey = 'access_token';
   static const _refreshKey = 'refresh_token';
+  static const _tokensUpdatedAtKey = 'tokens_updated_at';
   static const _phoneKey = 'user_phone';
   static const _countryNameKey = 'user_country_name';
   static const _flagEmojiKey = 'user_flag_emoji';
@@ -14,6 +15,10 @@ class TokenStorage {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_accessKey, access);
     await prefs.setString(_refreshKey, refresh);
+    await prefs.setString(
+      _tokensUpdatedAtKey,
+      DateTime.now().toUtc().toIso8601String(),
+    );
   }
 
   Future<void> saveUserInfo({
@@ -35,6 +40,16 @@ class TokenStorage {
   Future<String?> getRefreshToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_refreshKey);
+  }
+
+  Future<DateTime?> getTokensUpdatedAt() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_tokensUpdatedAtKey);
+    if (raw == null || raw.isEmpty) {
+      return null;
+    }
+
+    return DateTime.tryParse(raw);
   }
 
   Future<String?> getPhone() async {
@@ -61,6 +76,7 @@ class TokenStorage {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_accessKey);
     await prefs.remove(_refreshKey);
+    await prefs.remove(_tokensUpdatedAtKey);
     await prefs.remove(_phoneKey);
     await prefs.remove(_countryNameKey);
     await prefs.remove(_flagEmojiKey);
