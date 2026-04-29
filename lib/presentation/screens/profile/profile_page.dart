@@ -245,13 +245,13 @@ class ProfilePage extends StatelessWidget {
                             ),
                             const SizedBox(height: 10),
                             const ProfileInfoRow(
-                              title: 'Kirish usuli',
-                              value: 'Telefon + OTP',
+                              title: 'Email',
+                              value: '-',
                             ),
                             const SizedBox(height: 10),
                             const ProfileInfoRow(
-                              title: 'Hisob turi',
-                              value: 'Standart',
+                              title: 'Kirish usuli',
+                              value: 'Telefon + OTP',
                             ),
                             const SizedBox(height: 10),
                             const ProfileInfoRow(
