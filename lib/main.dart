@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:auth_profile_example/core/app.dart';
+
+import 'core/app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

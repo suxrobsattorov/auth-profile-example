@@ -2,6 +2,8 @@ class AppConstants {
   AppConstants._();
 
   static const String appName = 'Logo Auth';
+
+  static const String baseUrl = 'https://api.example.com/v1';
   static const int otpLength = 4;
 
   /// Store URLs

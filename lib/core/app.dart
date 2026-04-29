@@ -1,6 +1,8 @@
-import 'package:auth_profile_example/presentation/screens/auth/login_page.dart';
 import 'package:flutter/material.dart';
-import 'package:auth_profile_example/core/constants/constants.dart';
+
+import 'constants/constants.dart';
+import '../infrastructure/network/dio_client.dart';
+import '../presentation/screens/auth/login_page.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -11,6 +13,7 @@ class App extends StatelessWidget {
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      navigatorKey: alice.getNavigatorKey(),
       home: const LoginPage(),
     );
   }
