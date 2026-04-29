@@ -74,11 +74,13 @@ class TokenStorage {
 
   Future<void> clearAll() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_accessKey);
-    await prefs.remove(_refreshKey);
-    await prefs.remove(_tokensUpdatedAtKey);
-    await prefs.remove(_phoneKey);
-    await prefs.remove(_countryNameKey);
-    await prefs.remove(_flagEmojiKey);
+    await Future.wait([
+      prefs.remove(_accessKey),
+      prefs.remove(_refreshKey),
+      prefs.remove(_tokensUpdatedAtKey),
+      prefs.remove(_phoneKey),
+      prefs.remove(_countryNameKey),
+      prefs.remove(_flagEmojiKey),
+    ]);
   }
 }

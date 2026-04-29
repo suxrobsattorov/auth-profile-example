@@ -271,38 +271,56 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLogoutInProgress());
 
     final refreshToken = await _storage.getRefreshToken();
+    final accessToken = await _storage.getAccessToken();
+
     try {
-      try {
-        await _googleAuthService.signOut();
-      } catch (e, st) {
-        debugPrint(
-          '[AuthBloc] Google local signOut ignored during logout: $e\n$st',
-        );
-      }
-
-      if (refreshToken != null && refreshToken.isNotEmpty) {
-        try {
-          await _repository.logout(refreshToken);
-        } on DioException catch (e) {
-          final msg = _extractDioError(e);
-          debugPrint(
-            '[AuthBloc] Remote logout failed, local logout continues: $msg | status: ${e.response?.statusCode}',
-          );
-        } catch (e, st) {
-          debugPrint(
-            '[AuthBloc] Remote logout unknown error, local logout continues: $e\n$st',
-          );
-        }
-      }
-
       _stopRefreshTimer();
       await _storage.clearAll();
       emit(const AuthLoggedOut());
+      unawaited(
+        _completeLogoutCleanup(
+          refreshToken: refreshToken,
+          accessToken: accessToken,
+        ),
+      );
     } catch (e, st) {
       debugPrint('[AuthBloc] Local logout cleanup failed: $e\n$st');
       emit(const AuthFailure(
         'Lokal logoutni yakunlab bo\'lmadi. Qayta urinib ko\'ring.',
       ));
+    }
+  }
+
+  Future<void> _completeLogoutCleanup({
+    required String? refreshToken,
+    required String? accessToken,
+  }) async {
+    try {
+      await _googleAuthService.signOut();
+    } catch (e, st) {
+      debugPrint(
+        '[AuthBloc] Google local signOut ignored during logout: $e\n$st',
+      );
+    }
+
+    if (refreshToken == null || refreshToken.isEmpty) {
+      return;
+    }
+
+    try {
+      await _repository.logout(
+        refreshToken: refreshToken,
+        accessToken: accessToken,
+      );
+    } on DioException catch (e) {
+      final msg = _extractDioError(e);
+      debugPrint(
+        '[AuthBloc] Remote logout failed after local logout: $msg | status: ${e.response?.statusCode}',
+      );
+    } catch (e, st) {
+      debugPrint(
+        '[AuthBloc] Remote logout unknown error after local logout: $e\n$st',
+      );
     }
   }
 

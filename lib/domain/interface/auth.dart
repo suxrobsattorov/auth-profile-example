@@ -9,5 +9,8 @@ abstract class IAuthRepository {
 
   Future<AuthToken> refreshSession(String refreshToken);
 
-  Future<void> logout(String refreshToken);
+  Future<void> logout({
+    required String refreshToken,
+    String? accessToken,
+  });
 }

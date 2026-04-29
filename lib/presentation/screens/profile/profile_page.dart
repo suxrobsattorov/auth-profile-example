@@ -267,6 +267,8 @@ class _ProfilePageState extends State<ProfilePage> {
             final isHeaderLoading = state.isLoading;
             final avatarUrl = _resolveAvatarUrl(profile?.avatar);
             final country = _displayValue(profile?.country);
+            final trimmedEmail = profile?.email?.trim() ?? '';
+            final hasEmail = trimmedEmail.isNotEmpty;
             final email = _displayValue(profile?.email);
             final authMethod = _formatAuthMethods(profile?.authMethods);
             final createdAt = _formatCreatedAt(profile?.createdAt);
@@ -274,6 +276,9 @@ class _ProfilePageState extends State<ProfilePage> {
             final profileName = profile?.resolvedFullName.isNotEmpty == true
                 ? profile!.resolvedFullName
                 : 'Shaxsiy profil';
+            final headerContactValue =
+                hasPhoneNumber ? formattedPhoneNumber : trimmedEmail;
+            final showHeaderContact = headerContactValue.isNotEmpty;
 
             return SafeArea(
               child: SingleChildScrollView(
@@ -347,20 +352,20 @@ class _ProfilePageState extends State<ProfilePage> {
                                             style: AppTextStyles.headlineSmall,
                                             textAlign: TextAlign.center,
                                           ),
-                                          const SizedBox(height: 8),
-                                          if (hasPhoneNumber) ...[
+                                          const SizedBox(height: 4),
+                                          if (showHeaderContact) ...[
                                             _ProfileShimmerOverlay(
                                               enabled: isHeaderLoading,
                                               borderRadius: 10,
                                               child: Text(
-                                                formattedPhoneNumber,
-                                                style:
-                                                AppTextStyles.bodyMedium.copyWith(
+                                                headerContactValue,
+                                                style: AppTextStyles.bodyMedium
+                                                    .copyWith(
                                                   color: Colors.grey.shade600,
                                                 ),
                                               ),
                                             ),
-                                            const SizedBox(height: 8),
+                                            const SizedBox(height: 12),
                                           ],
                                           Container(
                                             padding: const EdgeInsets.symmetric(
@@ -389,20 +394,11 @@ class _ProfilePageState extends State<ProfilePage> {
                                       title: 'Hudud',
                                       value: country,
                                     ),
-                                    if (hasPhoneNumber) ...[
-                                      const SizedBox(height: 10),
-                                      ProfileInfoRow(
-                                        title: 'Telefon raqam',
-                                        value: formattedPhoneNumber,
-                                      ),
-                                    ],
-                                    if (!isHeaderLoading) ...[
-                                      const SizedBox(height: 10),
-                                      ProfileInfoRow(
-                                        title: 'Email',
-                                        value: email,
-                                      ),
-                                    ],
+                                    const SizedBox(height: 10),
+                                    ProfileInfoRow(
+                                      title: 'Email',
+                                      value: email,
+                                    ),
                                     const SizedBox(height: 10),
                                     ProfileInfoRow(
                                       title: 'Kirish usuli',
