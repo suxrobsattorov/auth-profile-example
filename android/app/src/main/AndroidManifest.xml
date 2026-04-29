@@ -4,7 +4,7 @@
     <!-- Android 13+ -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <application
-        android:label="auth_profile_example"
+        android:label="Profile"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
